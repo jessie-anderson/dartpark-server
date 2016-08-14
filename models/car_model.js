@@ -1,6 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 
-// create a schema for posts with a field
+// car schema
 const CarSchema = new Schema({
   make: String,
   model: String,
