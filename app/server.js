@@ -1,6 +1,14 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
+import mongoose from 'mongoose';
+import apiRouter from './router_jessie';
+
+// DB Setup
+const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost/dartpark';
+mongoose.connect(mongoURI);
+// set mongoose promises to es6 default
+mongoose.Promise = global.Promise;
 
 // initialize
 const app = express();
@@ -11,6 +19,10 @@ app.use(cors());
 // enable json message body for posting data to API
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// REGISTER OUR ROUTES -------------------------------
+// all of our routes will be prefixed with /api
+app.use('/api', apiRouter);
 
 
 // default index route
