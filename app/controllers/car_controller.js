@@ -5,6 +5,7 @@ export const createCar = (req, res) => {
   car.make = req.body.make;
   car.model = req.body.model;
   car.year = req.body.year;
+  car.color = req.body.color;
   car.plateNumber = req.body.plateNumber;
   car.owner = req.user; // make sure that user is the right word to user
   car.save()
@@ -21,6 +22,7 @@ export const updateCar = (req, res) => {
     make: req.body.make,
     model: req.body.model,
     year: req.body.year,
+    color: req.body.color,
     plateNumber: req.body.plateNumber,
     owner: req.user, // make sure user is the right thing to use
   };

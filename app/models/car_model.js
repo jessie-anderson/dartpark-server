@@ -5,6 +5,7 @@ const CarSchema = new Schema({
   make: String,
   model: String,
   year: String,
+  color: String,
   plateNumber: String,
   owner: { type: Schema.Types.ObjectId, ref: 'Renter' },
 });
