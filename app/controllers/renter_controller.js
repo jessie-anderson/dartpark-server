@@ -1,5 +1,6 @@
 import Renter from '../models/renter_model';
 import Conversation from '../models/conversation_model';
+import Spot from '../models/spot_model';
 
 export const createRenter = (req, res) => {
   try {
@@ -53,34 +54,132 @@ export const createRenter = (req, res) => {
     res.json({ error: `${err}` });
   }
 };
-//
-// export const buySpot = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const getSpots = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const getSpot = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const deleteSpot = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
+
+export const buySpot = (req, res) => {
+  try {
+    Spot.findById(req.params.spotId).then(spot => {
+      Renter.findById(req.params.renterId).then(renter => {
+        const updatedSpot = {
+          vendor: spot.vendor,
+          address: spot.address,
+          price: spot.price,
+          startDate: spot.startDate,
+          endDate: spot.endDate,
+          renter: req.params.renterId,
+        };
+
+        // update the spot to show that it has a renter
+        Spot.update({ _id: req.params.spotId }, updatedSpot)
+        .then(spotSuccess => {
+          const newSpots = renter.spots.push(req.params.spotId);
+
+          // update the renter's spot list to include spot they bought
+          const updatedRenter = {
+            email: renter.email,
+            password: renter.password,
+            name: renter.name,
+            bio: renter.bio,
+            spots: newSpots,
+            cards: renter.cards,
+            cars: renter.cars,
+            conversations: renter.conversations,
+            timestamp: renter.timestamp,
+          };
+          Renter.update({ _id: req.params.renterId }, updatedRenter)
+          .then(renterSuccess => {
+            res.json(renterSuccess);
+          })
+          .catch(err => {
+            res.json(err);
+          });
+          res.json(spotSuccess);
+        })
+        .catch(err => {
+          res.json(err);
+        });
+      })
+      .catch(err => {
+        res.json(err);
+      });
+    })
+    .catch(err => {
+      res.json(err);
+    });
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
+export const getSpots = (req, res) => {
+  try {
+    Renter.findById(req.params.renterId)
+    .populate('spots')
+    .then(response => {
+      res.json(response);
+    })
+    .catch(err => {
+      res.json(err);
+    });
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
+export const getSpot = (req, res) => {
+  try {
+    Spot.findById(req.params.spotId)
+    .then(response => {
+      res.json(response);
+    })
+    .catch(err => {
+      res.json(err);
+    });
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
+export const deleteSpot = (req, res) => {
+  try {
+    Spot.findById(req.params.spotId)
+    .then(spot => {
+      Renter.findById(req.params.renterId)
+      .then(renter => {
+        let idIndex = -1;
+        renter.spots.find((id, curIndex) => {
+          if (id === req.params.spotId) idIndex = curIndex;
+          return (id === req.params.spotId);
+        });
+        if (idIndex === -1) {
+          res.json({ error: `spot ${req.params.spotId} not in renter ${req.params.renterId}\'s spot list` });
+          return;
+        }
+
+        const newSpots = renter.spots.slice();
+        newSpots.splice(idIndex, 1);
+
+        const newRenter = Object.assign({}, renter, { spots: newSpots });
+        Renter.update({ _id: req.params.renterId }, newRenter)
+        .then(spotDeleteSuccess => {
+          res.json(spotDeleteSuccess);
+        })
+        .catch(err => {
+          res.json(err);
+        });
+      })
+      .catch(err => {
+        res.json(err);
+      });
+    })
+    .catch(err => {
+      res.json(err);
+    });
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
+
 //
 //
 // export const sendMessage = (req, res) => {
