@@ -52,7 +52,9 @@ router.route('/conversations/:id/requester/:requester')
       .get(Conversation.getConversations);
 
 router.route('/conversations/:conversationId')
+      .get(Conversation.getConversation)
       .put(Conversation.popConversationToTop)
+      .post(Conversation.sendMessage)
       .delete(Conversation.deleteConversation);
 
 router.route('/buySpot/:spotId/renter/:renterId')
