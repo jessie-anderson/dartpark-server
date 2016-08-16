@@ -31,9 +31,11 @@ export const createVendor = (req, res) => {
 
           vendor.save()
           .then(result => {
-            console.log(result);
             try {
-              res.json({ message: `Vendor created with \'id\' ${result._id}!` });
+              res.json({
+                id: result._id,
+                message: `Vendor created with \'id\' ${result._id}!`,
+              });
             } catch (err) {
               res.json({ error: `${err}` });
             }

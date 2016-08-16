@@ -32,9 +32,11 @@ export const createRenter = (req, res) => {
 
           renter.save()
           .then(result => {
-            console.log(result);
             try {
-              res.json({ message: `Renter created with \'id\' ${result._id}!` });
+              res.json({
+                id: result._id,
+                message: `Renter created with \'id\' ${result._id}!`,
+              });
             } catch (err) {
               res.json({ error: `${err}` });
             }
@@ -179,23 +181,6 @@ export const deleteSpot = (req, res) => {
   }
 };
 
-
-//
-//
-// export const sendMessage = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const deleteConversation = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
 // export const updateBio = (req, res) => {
 //   try {
 //   } catch (err) {

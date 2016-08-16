@@ -43,7 +43,6 @@ const spliceOutConversationBothEndsHelper = (resolve, revoke, convIds, i) => {
             }
           }
 
-          // console.log(updateNext);
           Conversation.update({ _id: prevId }, updateNext)
           .then(success1 => {
             try {
@@ -57,7 +56,6 @@ const spliceOutConversationBothEndsHelper = (resolve, revoke, convIds, i) => {
                       updatePrev.prev.renter = nextConv.prev.renter;
                     }
                   }
-                  // console.log(updatePrev);
 
                   Conversation.update({ _id: nextId }, updatePrev)
                   .then(success2 => {
@@ -140,12 +138,6 @@ const spliceIntoBeginningHelper = (resolve, revoke, result, newItem, lists, i) =
       } else {
         const next = i === 0 ? list.next.renter : list.next.vendor;
 
-        // console.log({ _id: next }, {
-        //   prev: update,
-        //   renter: newItem.renter,
-        //   vendor: newItem.vendor,
-        // });
-
         Conversation.findById(next)
         .then(conv1 => {
           try {
@@ -162,17 +154,9 @@ const spliceIntoBeginningHelper = (resolve, revoke, result, newItem, lists, i) =
               }
             }
 
-            console.log(updateObj);
-
             Conversation.update({ _id: next }, updateObj)
             .then(success1 => {
               try {
-                // console.log({ _id: list._id }, {
-                //   next: update,
-                //   renter: newItem.renter,
-                //   vendor: newItem.vendor,
-                // });
-
                 Conversation.findById(list._id)
                 .then(conv2 => {
                   try {
@@ -188,8 +172,6 @@ const spliceIntoBeginningHelper = (resolve, revoke, result, newItem, lists, i) =
                         updateObj2.next.renter = conv2.next.renter;
                       }
                     }
-
-                    console.log(updateObj2);
 
                     Conversation.update({ _id: list._id }, updateObj2)
                     .then(success2 => {
@@ -253,16 +235,26 @@ const spliceIntoBeginning = (newItem, lists) => {
   });
 };
 
-const getMessagesHelper = (resolve, revoke, currConversation, conversationsArray, i) => {
+const getMessagesHelper = (resolve, revoke, currConversation, conversationsArray, limit, i) => {
   try {
+    if (i === 0) {
+      conversationsArray.push({
+        id: currConversation._id,
+        renter: currConversation.renter,
+        vendor: currConversation.vendor,
+        messages: [],
+      });
+    }
+
     Message.findById(currConversation.messages[i])
     .then(message => {
       try {
-        conversationsArray.push(message);
-        if (i === currConversation.messages.length - 1) {
+        conversationsArray[conversationsArray.length - 1].messages.push(message);
+
+        if (i === currConversation.messages.length - 1 || (limit !== null && i === limit - 1)) {
           resolve();
         } else {
-          getMessagesHelper(resolve, revoke, currConversation, conversationsArray, i + 1);
+          getMessagesHelper(resolve, revoke, currConversation, conversationsArray, limit, i + 1);
         }
       } catch (err) {
         revoke(err);
@@ -276,54 +268,60 @@ const getMessagesHelper = (resolve, revoke, currConversation, conversationsArray
   }
 };
 
-const getMessages = (currConversation, conversationsArray) => {
+const getMessages = (currConversation, conversationsArray, limit) => {
   return new Promise((resolve, revoke) => {
     try {
-      getMessagesHelper(resolve, revoke, currConversation, conversationsArray, 0);
+      getMessagesHelper(resolve, revoke, currConversation, conversationsArray, limit, 0);
     } catch (err) {
       revoke(err);
     }
   });
 };
 
-const getConversationsArrayHelper = (resolve, revoke, currConversation, requester, conversationsArray) => {
+const getConversationsArrayHelper = (resolve, revoke, currConversation, requester, limit, conversationsArray) => {
   try {
-    // console.log(requester);
-    Conversation.findById(currConversation.next[requester])
-    .then(conv => {
-      try {
-        if (conv.head) {
-          resolve(conversationsArray);
-        } else {
-          console.log('haha');
-          getMessages(conv, conversationsArray)
-          .then(() => {
-            try {
-              getConversationsArrayHelper(resolve, revoke, conv, requester, conversationsArray);
-            } catch (err) {
-              revoke(err);
-            }
-          })
-          .catch(error => {
-            revoke(error);
-          });
+    if (currConversation === null) {
+      resolve(conversationsArray);
+    } else {
+      const convId = requester === null ? currConversation._id : currConversation.next[requester];
+
+      Conversation.findById(convId)
+      .then(conv => {
+        try {
+          if (requester !== null && conv.head) {
+            resolve(conversationsArray);
+          } else {
+            getMessages(conv, conversationsArray, limit)
+            .then(() => {
+              try {
+                const nextConv = requester === null ? null : conv;
+
+                getConversationsArrayHelper(resolve, revoke, nextConv, requester, limit, conversationsArray);
+              } catch (err) {
+                revoke(err);
+              }
+            })
+            .catch(error => {
+              revoke(error);
+            });
+          }
+        } catch (err) {
+          revoke(err);
         }
-      } catch (err) {
-        revoke(err);
-      }
-    })
-    .catch(error => {
-      revoke(error);
-    });
+      })
+      .catch(error => {
+        revoke(error);
+      });
+    }
   } catch (err) {
     revoke(err);
   }
 };
 
-const getConversationsArray = (currConversation, requester) => {
+const getConversationsArray = (currConversation, requester, limit) => {
   return new Promise((resolve, revoke) => {
     try {
-      getConversationsArrayHelper(resolve, revoke, currConversation, requester, []);
+      getConversationsArrayHelper(resolve, revoke, currConversation, requester, limit, []);
     } catch (err) {
       revoke(err);
     }
@@ -332,7 +330,8 @@ const getConversationsArray = (currConversation, requester) => {
 
 export const createConversation = (req, res) => {
   try {
-    if (typeof req.body.renterId === 'undefined' || typeof req.body.vendorId === 'undefined') {
+    if (typeof req.body.renterId === 'undefined' || typeof req.body.vendorId === 'undefined' ||
+      typeof req.body.message === 'undefined') {
       res.json({
         error: 'ERR: Users need \'email\', \'password\', and  \'name\' fields',
       });
@@ -364,9 +363,6 @@ export const createConversation = (req, res) => {
                   Conversation.findById(renter.conversations)
                   .then(renterHead => {
                     try {
-                      // console.log("jaja");
-                      // console.log(conversationHeads);
-                      // console.log("hahaha");
                       Conversation.findById(vendor.conversations)
                       .then(vendorHead => {
                         try {
@@ -383,12 +379,15 @@ export const createConversation = (req, res) => {
                                 vendor: result[3],
                               };
 
-                              // console.log(conversation);
-
                               conversation.save()
                               .then(success => {
                                 try {
-                                  res.json({ message: 'finally!' });
+                                  res.json({
+                                    id: conversation._id,
+                                    renter: conversation.renter,
+                                    vendor: conversation.vendor,
+                                    message: `Successfully created conversation '${conversation._id}'`,
+                                  });
                                 } catch (err) {
                                   res.json({ error: `${err}` });
                                 }
@@ -449,7 +448,7 @@ export const popConversationToTop = (req, res) => {
     if (typeof req.params.conversationId === 'undefined' || typeof req.body.id === 'undefined' ||
          typeof req.body.requester === 'undefined') {
       res.json({
-        error: 'ERR: \'email\', \'password\', and  \'name\' fields',
+        error: 'Popping conversation requires \'requester type\', \'renter/vendor id\', and  \'conversationId\' fields',
       });
     } else {
       const User = req.body.requester === 'renter' ? Renter : Vendor;
@@ -465,64 +464,62 @@ export const popConversationToTop = (req, res) => {
               Conversation.findById(req.params.conversationId)
               .then(conv => {
                 try {
-                  console.log(conv);
-                  console.log(conversationHeads);
-                  console.log('12');
-                  const connectedConvs = req.body.requester === 'renter' ? [[conv.prev.renter, conv.next.renter], null] : [null, [conv.prev.vendor, conv.next.vendor]];
+                  const headNextId = req.body.requester === 'renter' ? userConvHead.next.renter : userConvHead.next.vendor;
 
-                  spliceOutConversationBothEnds(connectedConvs)
-                  .then((renter, vendor) => {
-                    try {
-                      spliceIntoBeginning(conv, conversationHeads)
-                      .then(result => {
-                        try {
-                          console.log(result);
-                          const updateConv = {
-                            next: {},
-                            prev: {},
-                          };
+                  if (headNextId.toString() === conv._id.toString()) {
+                    res.json({ message: 'Conversation already at the top' });
+                  } else {
+                    const connectedConvs = req.body.requester === 'renter' ? [[conv.prev.renter, conv.next.renter], null] : [null, [conv.prev.vendor, conv.next.vendor]];
 
-                          if (req.body.requester === 'renter') {
-                            updateConv.prev.renter = result[0];
-                            updateConv.prev.vendor = conv.prev.vendor;
-                            updateConv.next.renter = result[1];
-                            updateConv.next.vendor = conv.next.vendor;
-                          } else {
-                            updateConv.prev.renter = conv.prev.renter;
-                            updateConv.prev.vendor = result[2];
-                            updateConv.next.renter = conv.next.renter;
-                            updateConv.next.vendor = result[3];
-                          }
+                    spliceOutConversationBothEnds(connectedConvs)
+                    .then((renter, vendor) => {
+                      try {
+                        spliceIntoBeginning(conv, conversationHeads)
+                        .then(result => {
+                          try {
+                            const updateConv = {
+                              next: {},
+                              prev: {},
+                            };
 
-                          console.log('34');
-
-                          console.log(updateConv);
-
-                          Conversation.update({ _id: req.params.conversationId }, updateConv)
-                          .then(success => {
-                            try {
-                              res.json({ message: 'finally!' });
-                            } catch (err) {
-                              res.json({ error: `${err}` });
+                            if (req.body.requester === 'renter') {
+                              updateConv.prev.renter = result[0];
+                              updateConv.prev.vendor = conv.prev.vendor;
+                              updateConv.next.renter = result[1];
+                              updateConv.next.vendor = conv.next.vendor;
+                            } else {
+                              updateConv.prev.renter = conv.prev.renter;
+                              updateConv.prev.vendor = result[2];
+                              updateConv.next.renter = conv.next.renter;
+                              updateConv.next.vendor = result[3];
                             }
-                          })
-                          .catch(error => {
-                            res.json({ error: `${error}` });
-                          });
-                        } catch (err) {
-                          res.json({ error: `${err}` });
-                        }
-                      })
-                      .catch(error => {
-                        res.json({ error: `${error}` });
-                      });
-                    } catch (err) {
-                      res.json({ error: `${err}` });
-                    }
-                  })
-                  .catch(error => {
-                    res.json({ error: `${error}` });
-                  });
+
+                            Conversation.update({ _id: req.params.conversationId }, updateConv)
+                            .then(success => {
+                              try {
+                                res.json({ message: `Successfully popped conversation '${req.params.conversationId}' to top` });
+                              } catch (err) {
+                                res.json({ error: `${err}` });
+                              }
+                            })
+                            .catch(error => {
+                              res.json({ error: `${error}` });
+                            });
+                          } catch (err) {
+                            res.json({ error: `${err}` });
+                          }
+                        })
+                        .catch(error => {
+                          res.json({ error: `${error}` });
+                        });
+                      } catch (err) {
+                        res.json({ error: `${err}` });
+                      }
+                    })
+                    .catch(error => {
+                      res.json({ error: `${error}` });
+                    });
+                  }
                 } catch (err) {
                   res.json({ error: `${err}` });
                 }
@@ -574,13 +571,9 @@ export const getConversations = (req, res) => {
               if (!currConversation.head) {
                 res.json({ error: `${errorHead}` });
               } else {
-                getConversationsArray(currConversation, req.params.requester)
+                getConversationsArray(currConversation, req.params.requester, 1)
                 .then(conversations => {
                   try {
-                    conversations.forEach(currConv => {
-                      // console.log(currConv);
-                    });
-
                     res.json({ conversations });
                   } catch (err) {
                     res.json({ error: `${err}` });
@@ -610,6 +603,38 @@ export const getConversations = (req, res) => {
   }
 };
 
+export const getConversation = (req, res) => {
+  try {
+    Conversation.findById(req.params.conversationId)
+    .then(currConversation => {
+      try {
+        if (currConversation.head) {
+          res.json({ error: `${errorHead}` });
+        } else {
+          getConversationsArray(currConversation, null, null)
+          .then(conversations => {
+            try {
+              res.json({ conversations });
+            } catch (err) {
+              res.json({ error: `${err}` });
+            }
+          })
+          .catch(error => {
+            res.json({ error: `${error}` });
+          });
+        }
+      } catch (err) {
+        res.json({ error: `${err}` });
+      }
+    })
+    .catch(error => {
+      res.json({ error: `${error}` });
+    });
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
 export const deleteConversation = (req, res) => {
   try {
     if (typeof req.params.conversationId === 'undefined') {
@@ -629,6 +654,60 @@ export const deleteConversation = (req, res) => {
               .then(success => {
                 try {
                   res.json({ message: `Successfully spliced out conversation ${conv._id} from renter ${renterId} and vendor ${vendorId}!` });
+                } catch (err) {
+                  res.json({ error: `${err}` });
+                }
+              })
+              .catch(error => {
+                res.json({ error: `${error}` });
+              });
+            } catch (err) {
+              res.json({ error: `${err}` });
+            }
+          })
+          .catch(error => {
+            res.json({ error: `${error}` });
+          });
+        } catch (err) {
+          res.json({ error: `${err}` });
+        }
+      })
+      .catch(error => {
+        res.json({ error: `${error}` });
+      });
+    }
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
+export const sendMessage = (req, res) => {
+  try {
+    if (typeof req.body.sender === 'undefined' || typeof req.body.message === 'undefined') {
+      res.json({
+        error: 'ERR: Sending a message needs a \'sender type\' and \'message\' field',
+      });
+    } else {
+      const newMessage = new Message();
+
+      newMessage.sender = req.body.sender;
+      newMessage.text = req.body.message;
+
+      newMessage.save()
+      .then(msg => {
+        try {
+          Conversation.findById(req.params.conversationId)
+          .then(conv => {
+            try {
+              const messages = conv.messages.slice(0);
+              messages.push(msg._id);
+
+              const updateMessages = { messages };
+
+              Conversation.update({ _id: req.params.conversationId }, updateMessages)
+              .then(success => {
+                try {
+                  res.json({ message: `Successfully added message '${msg._id}' with text '${msg.text}' to conversation '${conv._id}'` });
                 } catch (err) {
                   res.json({ error: `${err}` });
                 }
