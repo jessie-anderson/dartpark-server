@@ -13,21 +13,21 @@ const RenterSchema = new Schema({
     type: String,
     default: '',
   },
-  spots: {
-    type: [Schema.Types.ObjectId],
+  spots: [{
+    type: Schema.Types.ObjectId,
     ref: 'Spot',
     default: [],
-  },
-  cards: {
-    type: [Schema.Types.ObjectId],
+  }],
+  cards: [{
+    type: Schema.Types.ObjectId,
     ref: 'Card',
     default: [],
-  },
-  cars: {
-    type: [Schema.Types.ObjectId],
+  }],
+  cars: [{
+    type: Schema.Types.ObjectId,
     ref: 'Car',
     default: [],
-  },
+  }],
   conversations: {
     type: Schema.Types.ObjectId,
     ref: 'Conversation',

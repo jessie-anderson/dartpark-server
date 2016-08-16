@@ -2,7 +2,7 @@ import Spot from '../models/spot_model';
 
 export const createSpot = (req, res) => {
   const spot = new Spot();
-  spot.vendor = req.user;
+  spot.vendor = req.params.vendorId;
   spot.address = req.body.address;
   spot.price = req.body.price;
   spot.startDate = req.body.startDate;
