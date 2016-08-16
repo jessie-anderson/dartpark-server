@@ -2,17 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import mongoose from 'mongoose';
-<<<<<<< HEAD:app/server.js
-import apiRouter from './router_jessie';
-
-// DB Setup
-const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost/dartpark';
-mongoose.connect(mongoURI);
-// set mongoose promises to es6 default
-mongoose.Promise = global.Promise;
-=======
-import apiRouter from './routerMau';
->>>>>>> f97ce3880d3b49672c92ae1c4a5632dd970a67d6:app/serverMau.js
+import apiRouter from './router';
 
 // initialize
 const app = express();
@@ -31,15 +21,6 @@ app.use(bodyParser.json());
 // REGISTER OUR ROUTES -------------------------------
 // all of our routes will be prefixed with /api
 app.use('/api', apiRouter);
-<<<<<<< HEAD:app/server.js
-
-
-// default index route
-app.get('/', (req, res) => {
-  res.send('hi');
-});
-=======
->>>>>>> f97ce3880d3b49672c92ae1c4a5632dd970a67d6:app/serverMau.js
 
 // START THE SERVER
 // =============================================================================
