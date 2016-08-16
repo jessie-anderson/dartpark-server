@@ -9,18 +9,24 @@ const RenterSchema = new Schema({
   },
   password: String,
   name: String,
-  bio: String,
+  bio: {
+    type: String,
+    default: '',
+  },
   spots: {
     type: [Schema.Types.ObjectId],
     ref: 'Spot',
+    default: [],
   },
   cards: {
     type: [Schema.Types.ObjectId],
     ref: 'Card',
+    default: [],
   },
   cars: {
     type: [Schema.Types.ObjectId],
     ref: 'Car',
+    default: [],
   },
   conversations: {
     type: Schema.Types.ObjectId,

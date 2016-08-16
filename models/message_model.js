@@ -4,6 +4,7 @@ import mongoose, { Schema } from 'mongoose';
 const MessageSchema = new Schema({
   timestamp: Date,
   text: String,
+  sender: String,
 });
 
 // create model class
