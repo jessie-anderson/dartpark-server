@@ -1,9 +1,8 @@
-# starter express app template
+# DartPark server
+## Authors: Mau Esquivel, Jessie Anderson, Luisa Vasquez, Ben Cooper, Divya Kalidindi
 
-* node with babel
-* expressjs
-* airbnb eslint rules
+**Installation:**
+`npm install`
 
-Procfile set up to run on [heroku](https://devcenter.heroku.com/articles/getting-started-with-nodejs#deploy-the-app)
-
-
+**Deployment:**
+Automatically deploys to [Heroku](https://dashboard.heroku.com/apps/dartpark) when the master branch on Github is updated.
