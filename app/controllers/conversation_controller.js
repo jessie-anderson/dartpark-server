@@ -7,93 +7,101 @@ const errorHead = 'Error splicing into conversations head.';
 
 const spliceOutConversationBothEndsHelper = (resolve, revoke, convIds, i) => {
   try {
-    const prevId = convIds[i][0];
-    const nextId = convIds[i][1];
+    if (convIds[i] !== null) {
+      const prevId = convIds[i][0];
+      const nextId = convIds[i][1];
 
-    const updateNext = {};
-    const updatePrev = {};
+      const updateNext = {};
+      const updatePrev = {};
 
-    if (i === 0) {
-      updateNext.next = {
-        renter: nextId,
-      };
+      if (i === 0) {
+        updateNext.next = {
+          renter: nextId,
+        };
 
-      updatePrev.prev = {
-        renter: prevId,
-      };
-    } else {
-      updateNext.next = {
-        vendor: nextId,
-      };
+        updatePrev.prev = {
+          renter: prevId,
+        };
+      } else {
+        updateNext.next = {
+          vendor: nextId,
+        };
 
-      updatePrev.prev = {
-        vendor: prevId,
-      };
-    }
-
-    Conversation.findById(prevId)
-    .then(prevConv => {
-      try {
-        if (!prevConv.head) {
-          if (i === 0 && prevConv.next.vendor) {
-            updateNext.next.vendor = prevConv.next.vendor;
-          } else if (i === 1 && prevConv.next.renter) {
-            updateNext.next.renter = prevConv.next.renter;
-          }
-        }
-
-        // console.log(updateNext);
-        Conversation.update({ _id: prevId }, updateNext)
-        .then(success1 => {
-          try {
-            Conversation.findById(nextId)
-            .then(nextConv => {
-              try {
-                if (!nextConv.head) {
-                  if (i === 0 && nextConv.prev.vendor) {
-                    updatePrev.prev.vendor = nextConv.prev.vendor;
-                  } else if (i === 1 && nextConv.prev.renter) {
-                    updatePrev.prev.renter = nextConv.prev.renter;
-                  }
-                }
-                // console.log(updatePrev);
-
-                Conversation.update({ _id: nextId }, updatePrev)
-                .then(success2 => {
-                  try {
-                    if (i === convIds.length - 1) {
-                      resolve();
-                    } else {
-                      spliceOutConversationBothEndsHelper(resolve, revoke, convIds, i + 1);
-                    }
-                  } catch (err) {
-                    revoke(err);
-                  }
-                })
-                .catch(error => {
-                  revoke(error);
-                });
-              } catch (err) {
-                revoke(err);
-              }
-            })
-            .catch(error => {
-              revoke(error);
-            });
-          } catch (err) {
-            revoke(err);
-          }
-        })
-        .catch(error => {
-          revoke(error);
-        });
-      } catch (err) {
-        revoke(err);
+        updatePrev.prev = {
+          vendor: prevId,
+        };
       }
-    })
-    .catch(error => {
-      revoke(error);
-    });
+
+      Conversation.findById(prevId)
+      .then(prevConv => {
+        try {
+          if (!prevConv.head) {
+            if (i === 0 && prevConv.next.vendor) {
+              updateNext.next.vendor = prevConv.next.vendor;
+            } else if (i === 1 && prevConv.next.renter) {
+              updateNext.next.renter = prevConv.next.renter;
+            }
+          }
+
+          // console.log(updateNext);
+          Conversation.update({ _id: prevId }, updateNext)
+          .then(success1 => {
+            try {
+              Conversation.findById(nextId)
+              .then(nextConv => {
+                try {
+                  if (!nextConv.head) {
+                    if (i === 0 && nextConv.prev.vendor) {
+                      updatePrev.prev.vendor = nextConv.prev.vendor;
+                    } else if (i === 1 && nextConv.prev.renter) {
+                      updatePrev.prev.renter = nextConv.prev.renter;
+                    }
+                  }
+                  // console.log(updatePrev);
+
+                  Conversation.update({ _id: nextId }, updatePrev)
+                  .then(success2 => {
+                    try {
+                      if (i === convIds.length - 1) {
+                        resolve();
+                      } else {
+                        spliceOutConversationBothEndsHelper(resolve, revoke, convIds, i + 1);
+                      }
+                    } catch (err) {
+                      revoke(err);
+                    }
+                  })
+                  .catch(error => {
+                    revoke(error);
+                  });
+                } catch (err) {
+                  revoke(err);
+                }
+              })
+              .catch(error => {
+                revoke(error);
+              });
+            } catch (err) {
+              revoke(err);
+            }
+          })
+          .catch(error => {
+            revoke(error);
+          });
+        } catch (err) {
+          revoke(err);
+        }
+      })
+      .catch(error => {
+        revoke(error);
+      });
+    } else {
+      if (i === convIds.length - 1) {
+        resolve();
+      } else {
+        spliceOutConversationBothEndsHelper(resolve, revoke, convIds, i + 1);
+      }
+    }
   } catch (err) {
     revoke(err);
   }
@@ -154,6 +162,8 @@ const spliceIntoBeginningHelper = (resolve, revoke, result, newItem, lists, i) =
               }
             }
 
+            console.log(updateObj);
+
             Conversation.update({ _id: next }, updateObj)
             .then(success1 => {
               try {
@@ -178,6 +188,8 @@ const spliceIntoBeginningHelper = (resolve, revoke, result, newItem, lists, i) =
                         updateObj2.next.renter = conv2.next.renter;
                       }
                     }
+
+                    console.log(updateObj2);
 
                     Conversation.update({ _id: list._id }, updateObj2)
                     .then(success2 => {
@@ -283,6 +295,7 @@ const getConversationsArrayHelper = (resolve, revoke, currConversation, requeste
         if (conv.head) {
           resolve(conversationsArray);
         } else {
+          console.log('haha');
           getMessages(conv, conversationsArray)
           .then(() => {
             try {
@@ -452,30 +465,50 @@ export const popConversationToTop = (req, res) => {
               Conversation.findById(req.params.conversationId)
               .then(conv => {
                 try {
-                  spliceIntoBeginning(conv, conversationHeads)
-                  .then(result => {
+                  console.log(conv);
+                  console.log(conversationHeads);
+                  console.log('12');
+                  const connectedConvs = req.body.requester === 'renter' ? [[conv.prev.renter, conv.next.renter], null] : [null, [conv.prev.vendor, conv.next.vendor]];
+
+                  spliceOutConversationBothEnds(connectedConvs)
+                  .then((renter, vendor) => {
                     try {
-                      const updateConv = {
-                        next: {},
-                        prev: {},
-                      };
-
-                      if (req.body.requester === 'renter') {
-                        updateConv.prev.renter = result[0];
-                        updateConv.prev.vendor = conv.prev.vendor;
-                        updateConv.next.renter = result[1];
-                        updateConv.next.vendor = conv.next.vendor;
-                      } else {
-                        updateConv.prev.renter = conv.prev.renter;
-                        updateConv.prev.vendor = result[2];
-                        updateConv.next.renter = conv.next.renter;
-                        updateConv.next.vendor = result[3];
-                      }
-
-                      Conversation.update({ _id: req.params.conversationId }, updateConv)
-                      .then(success => {
+                      spliceIntoBeginning(conv, conversationHeads)
+                      .then(result => {
                         try {
-                          res.json({ message: 'finally!' });
+                          console.log(result);
+                          const updateConv = {
+                            next: {},
+                            prev: {},
+                          };
+
+                          if (req.body.requester === 'renter') {
+                            updateConv.prev.renter = result[0];
+                            updateConv.prev.vendor = conv.prev.vendor;
+                            updateConv.next.renter = result[1];
+                            updateConv.next.vendor = conv.next.vendor;
+                          } else {
+                            updateConv.prev.renter = conv.prev.renter;
+                            updateConv.prev.vendor = result[2];
+                            updateConv.next.renter = conv.next.renter;
+                            updateConv.next.vendor = result[3];
+                          }
+
+                          console.log('34');
+
+                          console.log(updateConv);
+
+                          Conversation.update({ _id: req.params.conversationId }, updateConv)
+                          .then(success => {
+                            try {
+                              res.json({ message: 'finally!' });
+                            } catch (err) {
+                              res.json({ error: `${err}` });
+                            }
+                          })
+                          .catch(error => {
+                            res.json({ error: `${error}` });
+                          });
                         } catch (err) {
                           res.json({ error: `${err}` });
                         }

@@ -2,6 +2,3 @@ node_modules
 config.js
 npm-debug.log
 dist
-cleardb.sh
-getconvs.sh
-showconvs.sh
