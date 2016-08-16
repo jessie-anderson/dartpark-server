@@ -16,35 +16,48 @@ router.get('/', (req, res) => {
 });
 
 // car routes
-router.route('/cars')
+router.route('/cars/renter/:renterId')
       .post(Car.createCar);
 
-router.route('/cars/:carId')
+router.route('/cars/:carId/renter/:renterId')
       .put(Car.updateCar)
       .delete(Car.deleteCar);
 
 // card routes
-router.route('/cards')
+router.route('/cards/renter/:renterId')
       .post(Card.createCard);
 
-router.route('/cards/:cardId')
+router.route('/cards/:cardId/renter/:renterId')
       .put(Card.updateCard)
       .delete(Card.deleteCard);
 
-// spot routes
-router.route('/spots')
+// spot routes: vendor
+router.route('/spots/vendor/:vendorId')
       .post(Spot.createSpot);
 
-router.route('/spots/:spotId')
+
+router.route('/spots/:spotId/vendor/:vendorId')
       .put(Spot.updateSpot)
       .delete(Spot.deleteSpot);
 
+// spot routes: renter
+router.route('/buySpot/:spotId/renter/:renterId')
+      .put(Renter.buySpot);
+
+router.route('/spots/:renterId')
+      .get(Renter.getSpots);
+
+router.route('/spots/:renterId/spot/:spotId')
+      .get(Renter.getSpot);
+
+// signup routes
 router.route('/renter/signup')
       .post(Renter.createRenter);
 
 router.route('/vendor/signup')
       .post(Vendor.createVendor);
 
+// conversation routes
 router.route('/conversations')
       .put(Conversation.createConversation);
 
@@ -56,14 +69,5 @@ router.route('/conversations/:conversationId')
       .put(Conversation.popConversationToTop)
       .post(Conversation.sendMessage)
       .delete(Conversation.deleteConversation);
-
-router.route('/buySpot/:spotId/renter/:renterId')
-      .put(Renter.buySpot);
-
-router.route('/spots/:renterId')
-      .get(Renter.getSpots);
-
-router.route('/spots/:renterId/spot/:spotId')
-      .get(Renter.getSpot);
 
 export default router;

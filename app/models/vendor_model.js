@@ -10,22 +10,21 @@ const VendorSchema = new Schema({
   password: String,
   name: String,
   bio: String,
-  spots: {
-    type: [Schema.Types.ObjectId],
+  spots: [{
+    type: Schema.Types.ObjectId,
     ref: 'Spot',
-  },
-  renters: {
-    type: [Schema.Types.ObjectId],
+  }],
+  renters: [{
+    type: Schema.Types.ObjectId,
     ref: 'Renter',
-  },
+  }],
   conversations: {
     type: Schema.Types.ObjectId,
     ref: 'Conversation',
   },
 }, {
   timestamp: true,
-}
-);
+});
 
 const VendorModel = mongoose.model('Vendor', VendorSchema);
 

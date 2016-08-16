@@ -1,6 +1,7 @@
 import Renter from '../models/renter_model';
 import Conversation from '../models/conversation_model';
 import Spot from '../models/spot_model';
+import Vendor from '../models/vendor_model';
 
 export const createRenter = (req, res) => {
   try {
@@ -61,54 +62,57 @@ export const buySpot = (req, res) => {
   try {
     Spot.findById(req.params.spotId).then(spot => {
       Renter.findById(req.params.renterId).then(renter => {
-        const updatedSpot = {
-          vendor: spot.vendor,
-          address: spot.address,
-          price: spot.price,
-          startDate: spot.startDate,
-          endDate: spot.endDate,
-          renter: req.params.renterId,
-        };
+        const updatedSpot = Object.assign({}, spot._doc, { renter: renter._id });
 
         // update the spot to show that it has a renter
         Spot.update({ _id: req.params.spotId }, updatedSpot)
         .then(spotSuccess => {
-          const newSpots = renter.spots.push(req.params.spotId);
+          renter.spots.push(req.params.spotId);
 
           // update the renter's spot list to include spot they bought
-          const updatedRenter = {
-            email: renter.email,
-            password: renter.password,
-            name: renter.name,
-            bio: renter.bio,
-            spots: newSpots,
-            cards: renter.cards,
-            cars: renter.cars,
-            conversations: renter.conversations,
-            timestamp: renter.timestamp,
-          };
+          const updatedRenter = Object.assign({}, renter._doc, { spots: renter.spots });
           Renter.update({ _id: req.params.renterId }, updatedRenter)
           .then(renterSuccess => {
+            Vendor.findById(spot.vendor)
+            .then(vendor => {
+              vendor.renters.push(req.params.renterId);
+
+              // add this renter to the spot's vendor's list of renters
+              const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
+              Vendor.update({ _id: vendor._id }, updatedVendor)
+              .then(vendorSuccess => {
+                res.json(vendorSuccess);
+              })
+
+              // now all the errors...
+              .catch(err => {
+                res.json({ errorUpdatingVendor: err });
+              });
+            })
+            .catch(err => {
+              res.json({ errorFindingVendor: err });
+            });
             res.json(renterSuccess);
           })
           .catch(err => {
-            res.json(err);
+            res.json({ errorUpdatingRenter: err });
           });
+
           res.json(spotSuccess);
         })
         .catch(err => {
-          res.json(err);
+          res.json({ errorUpdatingSpot: err });
         });
       })
       .catch(err => {
-        res.json(err);
+        res.json({ errorFindingRenter: err });
       });
     })
     .catch(err => {
-      res.json(err);
+      res.json({ errorFindingSpot: err });
     });
   } catch (err) {
-    res.json({ error: `${err}` });
+    res.json({ generalError: err });
   }
 };
 
@@ -120,10 +124,10 @@ export const getSpots = (req, res) => {
       res.json(response);
     })
     .catch(err => {
-      res.json(err);
+      res.json({ errorPopulatingSpots: err });
     });
   } catch (err) {
-    res.json({ error: `${err}` });
+    res.json({ generalError: err });
   }
 };
 
