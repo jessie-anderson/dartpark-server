@@ -61,52 +61,61 @@ export const createRenter = (req, res) => {
 export const buySpot = (req, res) => {
   try {
     Spot.findById(req.params.spotId).then(spot => {
-      Renter.findById(req.params.renterId).then(renter => {
-        const updatedSpot = Object.assign({}, spot._doc, { renter: renter._id });
+      if (spot.renter === null) {
+        Renter.findById(req.params.renterId).then(renter => {
+          const updatedSpot = Object.assign({}, spot._doc, { renter: renter._id });
 
-        // update the spot to show that it has a renter
-        Spot.update({ _id: req.params.spotId }, updatedSpot)
-        .then(spotSuccess => {
-          renter.spots.push(req.params.spotId);
+          // update the spot to show that it has a renter
+          Spot.update({ _id: req.params.spotId }, updatedSpot)
+          .then(spotSuccess => {
+            renter.spots.push(req.params.spotId);
 
-          // update the renter's spot list to include spot they bought
-          const updatedRenter = Object.assign({}, renter._doc, { spots: renter.spots });
-          Renter.update({ _id: req.params.renterId }, updatedRenter)
-          .then(renterSuccess => {
-            Vendor.findById(spot.vendor)
-            .then(vendor => {
-              vendor.renters.push(req.params.renterId);
+            // update the renter's spot list to include spot they bought
+            const updatedRenter = Object.assign({}, renter._doc, { spots: renter.spots });
+            Renter.update({ _id: req.params.renterId }, updatedRenter)
+            .then(renterSuccess => {
+              Vendor.findById(spot.vendor)
+              .then(vendor => {
+                // if the renter isn't already in the vendor's list...
+                if (vendor.renters.find(curId => {
+                  return String(curId).valueOf() === String(renter._id).valueOf();
+                }) === undefined) {
+                  vendor.renters.push(req.params.renterId);
 
-              // add this renter to the spot's vendor's list of renters
-              const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
-              Vendor.update({ _id: vendor._id }, updatedVendor)
-              .then(vendorSuccess => {
-                res.json(vendorSuccess);
+                  // add this renter to the spot's vendor's list of renters
+                  const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
+                  Vendor.update({ _id: vendor._id }, updatedVendor)
+                  .then(vendorSuccess => {
+                    res.json(vendorSuccess);
+                  })
+                  .catch(err => {
+                    res.json({ errorUpdatingVendor: err });
+                  });
+                }
               })
 
-              // now all the errors...
+              // now all the error catching...
               .catch(err => {
-                res.json({ errorUpdatingVendor: err });
+                res.json({ errorFindingVendor: err });
               });
+              res.json(renterSuccess);
             })
             .catch(err => {
-              res.json({ errorFindingVendor: err });
+              res.json({ errorUpdatingRenter: err });
             });
-            res.json(renterSuccess);
+
+            res.json(spotSuccess);
           })
           .catch(err => {
-            res.json({ errorUpdatingRenter: err });
+            res.json({ errorUpdatingSpot: err });
           });
-
-          res.json(spotSuccess);
         })
         .catch(err => {
-          res.json({ errorUpdatingSpot: err });
+          res.json({ errorFindingRenter: err });
         });
-      })
-      .catch(err => {
-        res.json({ errorFindingRenter: err });
-      });
+      } else {
+        throw new alreadyBoughtException();
+      }
     })
     .catch(err => {
       res.json({ errorFindingSpot: err });
@@ -115,6 +124,11 @@ export const buySpot = (req, res) => {
     res.json({ generalError: err });
   }
 };
+
+function alreadyBoughtException() {
+  this.name = 'err_already_purchased';
+  this.message = 'Error: spot already purchased';
+}
 
 export const getSpots = (req, res) => {
   try {
@@ -138,36 +152,73 @@ export const getSpot = (req, res) => {
       res.json(response);
     })
     .catch(err => {
-      res.json(err);
+      res.json({ errorFindingSpot: err });
     });
   } catch (err) {
-    res.json({ error: `${err}` });
+    res.json({ generalError: err });
   }
 };
 
+// problem: how to update vendor's list of renters?
 export const deleteSpot = (req, res) => {
   try {
     Spot.findById(req.params.spotId)
     .then(spot => {
       Renter.findById(req.params.renterId)
       .then(renter => {
-        let idIndex = -1;
-        renter.spots.find((id, curIndex) => {
-          if (id === req.params.spotId) idIndex = curIndex;
-          return (id === req.params.spotId);
-        });
+        const idIndex = findIndexOfItem(req.params.spotId, renter.spots);
         if (idIndex === -1) {
           res.json({ error: `spot ${req.params.spotId} not in renter ${req.params.renterId}\'s spot list` });
           return;
         }
 
-        const newSpots = renter.spots.slice();
-        newSpots.splice(idIndex, 1);
+        renter.spots.splice(idIndex, 1);
 
-        const newRenter = Object.assign({}, renter, { spots: newSpots });
+        const newRenter = Object.assign({}, renter._doc, { spots: renter.spots });
         Renter.update({ _id: req.params.renterId }, newRenter)
-        .then(spotDeleteSuccess => {
-          res.json(spotDeleteSuccess);
+        .then(renterUpdateSuccess => {
+          const newSpot = Object.assign({}, spot._doc, { renter: null });
+          Spot.update({ _id: req.params.spotId }, newSpot)
+          .then(spotUpdateSuccess => {
+            Renter.findById(req.params.renterId)
+            .populate('spots')
+            // fix!!!!!!
+            .then(populatedRenter => {
+              let vendorStillInSpots = false;
+              for (let i = 0; i < populatedRenter.spots.length; i++) {
+                if (String(populatedRenter.spots[i].vendor).valueOf() === String(spot.vendor).valueOf()) {
+                  vendorStillInSpots = true;
+                }
+              }
+              if (!vendorStillInSpots) {
+                Vendor.findById(spot.vendor)
+                .then(vendor => {
+                  const renterIndex = findIndexOfItem(req.params.renterId, vendor.renters);
+                  if (renterIndex !== -1) {
+                    vendor.renters.splice(renterIndex, 1);
+                    const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
+                    Vendor.update({ _id: vendor._id }, updatedVendor)
+                    .then(vendorUpdateSuccess => {
+                      res.json(vendorUpdateSuccess);
+                    })
+                    .catch(err => {
+                      res.json({ vendorUpdateError: err });
+                    });
+                  }
+                })
+                .catch(err => {
+                  res.json({ vendorFindError: err });
+                });
+              }
+            })
+            .catch(err => {
+              res.json({ spotPopulationError: err });
+            });
+            res.json(spotUpdateSuccess);
+          })
+          .catch(err => {
+            res.json({ spotUpdateError: err });
+          });
         })
         .catch(err => {
           res.json(err);
@@ -184,6 +235,20 @@ export const deleteSpot = (req, res) => {
     res.json({ error: `${err}` });
   }
 };
+
+// returns -1 if item is not in list
+// otherwise returns index of item
+function findIndexOfItem(item, list) {
+  let itemIndex = -1;
+  list.find((curItem, curIndex) => {
+    if (String(curItem).valueOf() === String(item).valueOf()) {
+      itemIndex = curIndex;
+      return true;
+    }
+    return false;
+  });
+  return itemIndex;
+}
 
 // export const updateBio = (req, res) => {
 //   try {
