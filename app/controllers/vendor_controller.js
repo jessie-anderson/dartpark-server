@@ -55,3 +55,70 @@ export const createVendor = (req, res) => {
     res.json({ error: `${err}` });
   }
 };
+
+// ========================= add routes for these ========================== //
+
+export const updateBio = (req, res) => {
+  try {
+    if (typeof req.body.bio === 'undefined') {
+      res.json({ error: 'request body must include \'bio\' field' });
+      return;
+    }
+    Vendor.findById(req.params.vendorId)
+    .then(vendor => {
+      const updatedVendor = Object.assign({}, vendor._doc, { bio: req.body.bio });
+      Vendor.update({ _id: req.params.vendorId }, updatedVendor)
+      .then(success => {
+        res.json(success);
+      })
+      .catch(err => {
+        res.json({ vendorUpdateError: err });
+      });
+    })
+    .catch(err => {
+      res.json({ vendorFindError: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};
+
+export const changePassword = (req, res) => {
+  try {
+    if (typeof req.body.password === 'undefined') {
+      res.json({ error: 'request body must include \'password\' field' });
+      return;
+    }
+    Vendor.findById(req.params.vendorId)
+    .then(vendor => {
+      const updatedVendor = Object.assign({}, vendor._doc, { password: req.body.password });
+      Vendor.update({ _id: req.params.vendorId }, updatedVendor)
+      .then(success => {
+        res.json(success);
+      })
+      .catch(err => {
+        res.json({ vendorUpdateError: err });
+      });
+    })
+    .catch(err => {
+      res.json({ vendorFindError: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};
+
+export const getSpots = (req, res) => {
+  try {
+    Vendor.findById(req.params.vendorId)
+    .populate('spots')
+    .then(response => {
+      res.json(response.spots);
+    })
+    .catch(err => {
+      res.json({ errorPopulatingSpots: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};

@@ -33,22 +33,23 @@ router.route('/cards/renter/:cardId')
 
 // spot routes: vendor
 router.route('/spots/vendor/:vendorId')
-      .post(Spot.createSpot);
+      .post(Spot.createSpot)
+      .get(Vendor.getSpots);
 
 
 router.route('/spots/:spotId')
       .put(Spot.updateSpot)
-      .delete(Spot.deleteSpot);
+      .delete(Spot.deleteSpot)
+      .get(Spot.getSpot);
 
 // spot routes: renter
 router.route('/buySpot/:spotId/renter/:renterId')
       .put(Renter.buySpot);
 
-router.route('/spots/:renterId')
+router.route('/spots/renter/:renterId')
       .get(Renter.getSpots);
 
 router.route('/spots/:renterId/spot/:spotId')
-      .get(Renter.getSpot)
       .delete(Renter.deleteSpot);
 
 // signup routes
@@ -70,5 +71,21 @@ router.route('/conversations/:conversationId')
       .put(Conversation.popConversationToTop)
       .post(Conversation.sendMessage)
       .delete(Conversation.deleteConversation);
+
+// change password: renter
+router.route('/changePassword/renter/:renterId')
+      .put(Renter.changePassword);
+
+// change password: vendor
+router.route('/changePassword/vendor/:vendorId')
+      .put(Vendor.changePassword);
+
+// change bio: renter
+router.route('/changeBio/renter/:renterId')
+      .put(Renter.updateBio);
+
+// change bio: vendor
+router.route('/changeBio/vendor/:vendorId')
+      .put(Vendor.updateBio);
 
 export default router;
