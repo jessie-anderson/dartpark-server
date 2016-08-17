@@ -19,7 +19,7 @@ router.get('/', (req, res) => {
 router.route('/cars/renter/:renterId')
       .post(Car.createCar);
 
-router.route('/cars/:carId/renter/:renterId')
+router.route('/cars/renter/:carId')
       .put(Car.updateCar)
       .delete(Car.deleteCar);
 
@@ -27,7 +27,7 @@ router.route('/cars/:carId/renter/:renterId')
 router.route('/cards/renter/:renterId')
       .post(Card.createCard);
 
-router.route('/cards/:cardId/renter/:renterId')
+router.route('/cards/renter/:cardId')
       .put(Card.updateCard)
       .delete(Card.deleteCard);
 
@@ -36,7 +36,7 @@ router.route('/spots/vendor/:vendorId')
       .post(Spot.createSpot);
 
 
-router.route('/spots/:spotId/vendor/:vendorId')
+router.route('/spots/:spotId')
       .put(Spot.updateSpot)
       .delete(Spot.deleteSpot);
 
@@ -48,7 +48,8 @@ router.route('/spots/:renterId')
       .get(Renter.getSpots);
 
 router.route('/spots/:renterId/spot/:spotId')
-      .get(Renter.getSpot);
+      .get(Renter.getSpot)
+      .delete(Renter.deleteSpot);
 
 // signup routes
 router.route('/renter/signup')

@@ -7,6 +7,7 @@ const SpotSchema = new Schema({
   price: Number,
   startDate: String,
   endDate: String,
+  number: String,
   renter: { type: Schema.Types.ObjectId, ref: 'Renter', default: null },
 });
 
