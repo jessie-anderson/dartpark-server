@@ -134,3 +134,17 @@ export const deleteSpot = (req, res) => {
     res.json({ generalError: err });
   }
 };
+
+export const getSpot = (req, res) => {
+  try {
+    Spot.findById(req.params.spotId)
+    .then(response => {
+      res.json(response);
+    })
+    .catch(err => {
+      res.json({ errorFindingSpot: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};

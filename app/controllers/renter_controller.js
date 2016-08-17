@@ -135,24 +135,10 @@ export const getSpots = (req, res) => {
     Renter.findById(req.params.renterId)
     .populate('spots')
     .then(response => {
-      res.json(response);
+      res.json(response.spots);
     })
     .catch(err => {
       res.json({ errorPopulatingSpots: err });
-    });
-  } catch (err) {
-    res.json({ generalError: err });
-  }
-};
-
-export const getSpot = (req, res) => {
-  try {
-    Spot.findById(req.params.spotId)
-    .then(response => {
-      res.json(response);
-    })
-    .catch(err => {
-      res.json({ errorFindingSpot: err });
     });
   } catch (err) {
     res.json({ generalError: err });
@@ -250,12 +236,32 @@ function findIndexOfItem(item, list) {
   return itemIndex;
 }
 
-// export const updateBio = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
+// ========================= add routes for these ========================== //
+
+export const updateBio = (req, res) => {
+  try {
+    if (typeof req.body.bio === 'undefined') {
+      res.json({ error: 'request body must include \'bio\' field' });
+      return;
+    }
+    Renter.findById(req.params.renterId)
+    .then(renter => {
+      const updatedRenter = Object.assign({}, renter._doc, { bio: req.body.bio });
+      Renter.update({ _id: req.params.renterId }, updatedRenter)
+      .then(success => {
+        res.json(success);
+      })
+      .catch(err => {
+        res.json({ renterUpdateError: err });
+      });
+    })
+    .catch(err => {
+      res.json({ renterFindError: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};
 //
 // export const updateProfilePicture = (req, res) => {
 //   try {
@@ -264,44 +270,31 @@ function findIndexOfItem(item, list) {
 //   }
 // };
 //
-// export const addCard = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const addCard = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const deleteCard = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const addCar = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const deleteCar = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
-//
-// export const changePassword = (req, res) => {
-//   try {
-//   } catch (err) {
-//     res.json({ error: `${err}` });
-//   }
-// };
+export const changePassword = (req, res) => {
+  try {
+    if (typeof req.body.password === 'undefined') {
+      res.json({ error: 'request body must include \'password\' field' });
+      return;
+    }
+    Renter.findById(req.params.renterId)
+    .then(renter => {
+      const updatedRenter = Object.assign({}, renter._doc, { password: req.body.password });
+      Renter.update({ _id: req.params.renterId }, updatedRenter)
+      .then(success => {
+        res.json(success);
+      })
+      .catch(err => {
+        res.json({ renterUpdateError: err });
+      });
+    })
+    .catch(err => {
+      res.json({ renterFindError: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};
+
+// export const updatePicture = (req, res) => {
+
+// }
