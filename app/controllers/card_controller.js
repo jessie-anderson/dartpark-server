@@ -82,6 +82,10 @@ export const deleteCard = (req, res) => {
     .populate('owner')
     .then(populatedCard => {
       const cardIdIndex = findIndexOfItem(req.params.cardId, populatedCard.owner.cards);
+      if (cardIdIndex < 0) {
+        res.json({ error: 'card ID not found' });
+        return;
+      }
       populatedCard.owner.cards.splice(cardIdIndex, 1);
       const updatedRenter = Object.assign({}, populatedCard.owner._doc, { cars: populatedCard.owner.cards });
       Renter.update({ _id: populatedCard.owner._id }, updatedRenter)

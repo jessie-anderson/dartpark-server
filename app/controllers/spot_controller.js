@@ -107,6 +107,10 @@ export const deleteSpot = (req, res) => {
       .populate('vendor')
       .then(populatedSpot => {
         const spotIndex = findIndexOfItem(req.params.spotId, populatedSpot.vendor.spots);
+        if (spotIndex < 0) {
+          res.json({ error: 'spot not in vendor\'s list' });
+          return;
+        }
         populatedSpot.vendor.spots.splice(spotIndex, 1);
         const updatedVendor = Object.assign({}, populatedSpot.vendor._doc, { spots: populatedSpot.vendor.spots });
         Vendor.update({ _id: populatedSpot.vendor._id }, updatedVendor)
