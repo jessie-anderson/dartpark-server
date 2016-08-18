@@ -1,6 +1,7 @@
 import Renter from '../models/renter_model';
 import Conversation from '../models/conversation_model';
 import Spot from '../models/spot_model';
+import { tokenForUser } from '../utils';
 
 export const createRenter = (req, res) => {
   try {
@@ -35,6 +36,7 @@ export const createRenter = (req, res) => {
             try {
               res.json({
                 id: result._id,
+                token: tokenForUser(result),
                 message: `Renter created with \'id\' ${result._id}!`,
               });
             } catch (err) {
@@ -52,6 +54,18 @@ export const createRenter = (req, res) => {
         res.json({ error: `${error}` });
       });
     }
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
+export const signin = (req, res) => {
+  try {
+    res.json({
+      message: `Renter '${req.user.email}' successfully logged in`,
+      id: req.user._id,
+      token: tokenForUser(req.user),
+    });
   } catch (err) {
     res.json({ error: `${err}` });
   }

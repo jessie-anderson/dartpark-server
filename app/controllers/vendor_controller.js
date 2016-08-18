@@ -1,6 +1,8 @@
 import Vendor from '../models/vendor_model';
 import Conversation from '../models/conversation_model';
 
+import { tokenForUser } from '../utils';
+
 export const createVendor = (req, res) => {
   try {
     const vendor = new Vendor();
@@ -34,6 +36,7 @@ export const createVendor = (req, res) => {
             try {
               res.json({
                 id: result._id,
+                token: tokenForUser(result),
                 message: `Vendor created with \'id\' ${result._id}!`,
               });
             } catch (err) {
@@ -51,6 +54,18 @@ export const createVendor = (req, res) => {
         res.json({ error: `${error}` });
       });
     }
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
+export const signin = (req, res) => {
+  try {
+    res.json({
+      message: `User '${req.user.email}' successfully logged in`,
+      id: req.user._id,
+      token: tokenForUser(req.user),
+    });
   } catch (err) {
     res.json({ error: `${err}` });
   }

@@ -8,6 +8,9 @@ import * as Renter from './controllers/renter_controller';
 import * as Spot from './controllers/spot_controller';
 import * as Vendor from './controllers/vendor_controller';
 
+// passport
+import { requireSigninRenter, requireSigninVendor, requireAuthRenter, requireAuthVendor, requireAuthVersatile } from './services/passport';
+
 // set up router
 const router = Router();
 
@@ -42,14 +45,20 @@ router.route('/spots/:spotId')
 router.route('/renter/signup')
       .post(Renter.createRenter);
 
+router.route('/renter/signin')
+      .post(requireSigninRenter, Renter.signin);
+
 router.route('/vendor/signup')
       .post(Vendor.createVendor);
 
+router.route('/vendor/signin')
+      .post(requireSigninVendor, Vendor.signin);
+
 router.route('/conversations')
-      .put(Conversation.createConversation);
+      .put(requireAuthRenter, requireAuthVendor, Conversation.createConversation);
 
 router.route('/conversations/:id/requester/:requester')
-      .get(Conversation.getConversations);
+      .get(requireAuthVersatile, Conversation.getConversations);
 
 router.route('/conversations/:conversationId')
       .get(Conversation.getConversation)
