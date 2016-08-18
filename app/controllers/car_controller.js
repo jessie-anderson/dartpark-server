@@ -82,6 +82,10 @@ export const deleteCar = (req, res) => {
     .populate('owner')
     .then(populatedCar => {
       const carIdIndex = findIndexOfItem(req.params.carId, populatedCar.owner.cars);
+      if (carIdIndex < 0) {
+        res.json({ error: 'car ID not found ' });
+        return;
+      }
       populatedCar.owner.cars.splice(carIdIndex, 1);
       const updatedRenter = Object.assign({}, populatedCar.owner._doc, { cars: populatedCar.owner.cars });
       Renter.update({ _id: populatedCar.owner._id }, updatedRenter)
