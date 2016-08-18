@@ -8,6 +8,9 @@ import * as Renter from './controllers/renter_controller';
 import * as Spot from './controllers/spot_controller';
 import * as Vendor from './controllers/vendor_controller';
 
+// passport
+import { requireSigninRenter, requireSigninVendor, requireAuthRenter, requireAuthVendor, requireAuthVersatile } from './services/passport';
+
 // set up router
 const router = Router();
 
@@ -16,55 +19,60 @@ router.get('/', (req, res) => {
 });
 
 // car routes
-router.route('/cars/renter/:renterId')
+router.route(requireAuthRenter, '/cars')
       .post(Car.createCar);
 
-router.route('/cars/renter/:carId')
+router.route(requireAuthRenter, '/cars/:carId')
       .put(Car.updateCar)
       .delete(Car.deleteCar);
 
 // card routes
-router.route('/cards/renter/:renterId')
+router.route(requireAuthRenter, '/cards')
       .post(Card.createCard);
 
-router.route('/cards/renter/:cardId')
+router.route(requireAuthRenter, '/cards/:cardId')
       .put(Card.updateCard)
       .delete(Card.deleteCard);
 
 // spot routes: vendor
-router.route('/spots/vendor/:vendorId')
+router.route(requireAuthVendor, '/vendor/spots')
       .post(Spot.createSpot)
       .get(Vendor.getSpots);
 
 
-router.route('/spots/:spotId')
+router.route(requireAuthVendor, '/vendor/spots/:spotId')
       .put(Spot.updateSpot)
       .delete(Spot.deleteSpot)
       .get(Spot.getSpot);
 
 // spot routes: renter
-router.route('/buySpot/:spotId/renter/:renterId')
+router.route(requireAuthRenter, '/buySpot/:spotId')
       .put(Renter.buySpot);
 
-router.route('/spots/renter/:renterId')
+router.route(requireAuthRenter, '/renter/spots')
       .get(Renter.getSpots);
 
-router.route('/spots/:renterId/spot/:spotId')
+router.route(requireAuthRenter, '/renter/spots/:spotId')
       .delete(Renter.deleteSpot);
 
 // signup routes
 router.route('/renter/signup')
       .post(Renter.createRenter);
 
+router.route('/renter/signin')
+      .post(requireSigninRenter, Renter.signin);
+
 router.route('/vendor/signup')
       .post(Vendor.createVendor);
 
-// conversation routes
+router.route('/vendor/signin')
+      .post(requireSigninVendor, Vendor.signin);
+
 router.route('/conversations')
-      .put(Conversation.createConversation);
+      .put(requireAuthRenter, requireAuthVendor, Conversation.createConversation);
 
 router.route('/conversations/:id/requester/:requester')
-      .get(Conversation.getConversations);
+      .get(requireAuthVersatile, Conversation.getConversations);
 
 router.route('/conversations/:conversationId')
       .get(Conversation.getConversation)
@@ -73,19 +81,19 @@ router.route('/conversations/:conversationId')
       .delete(Conversation.deleteConversation);
 
 // change password: renter
-router.route('/changePassword/renter/:renterId')
+router.route(requireAuthRenter, '/renter/changePassword')
       .put(Renter.changePassword);
 
 // change password: vendor
-router.route('/changePassword/vendor/:vendorId')
+router.route(requireAuthVendor, '/vendor/changePassword')
       .put(Vendor.changePassword);
 
 // change bio: renter
-router.route('/changeBio/renter/:renterId')
+router.route(requireAuthRenter, '/renter/changeBio')
       .put(Renter.updateBio);
 
 // change bio: vendor
-router.route('/changeBio/vendor/:vendorId')
+router.route(requireAuthVendor, '/vendor/changeBio')
       .put(Vendor.updateBio);
 
 export default router;

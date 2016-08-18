@@ -1,6 +1,8 @@
 import Vendor from '../models/vendor_model';
 import Conversation from '../models/conversation_model';
 
+import { tokenForUser } from '../utils';
+
 export const createVendor = (req, res) => {
   try {
     const vendor = new Vendor();
@@ -34,6 +36,7 @@ export const createVendor = (req, res) => {
             try {
               res.json({
                 id: result._id,
+                token: tokenForUser(result),
                 message: `Vendor created with \'id\' ${result._id}!`,
               });
             } catch (err) {
@@ -56,18 +59,16 @@ export const createVendor = (req, res) => {
   }
 };
 
-// ========================= add routes for these ========================== //
-
 export const updateBio = (req, res) => {
   try {
     if (typeof req.body.bio === 'undefined') {
       res.json({ error: 'request body must include \'bio\' field' });
       return;
     }
-    Vendor.findById(req.params.vendorId)
+    Vendor.findById(req.user._id)
     .then(vendor => {
       const updatedVendor = Object.assign({}, vendor._doc, { bio: req.body.bio });
-      Vendor.update({ _id: req.params.vendorId }, updatedVendor)
+      Vendor.update({ _id: req.user._id }, updatedVendor)
       .then(success => {
         res.json(success);
       })
@@ -89,7 +90,7 @@ export const changePassword = (req, res) => {
       res.json({ error: 'request body must include \'password\' field' });
       return;
     }
-    Vendor.findById(req.params.vendorId)
+    Vendor.findById(req.user._id)
     .then(vendor => {
       const updatedVendor = Object.assign({}, vendor._doc, { password: req.body.password });
       Vendor.update({ _id: req.params.vendorId }, updatedVendor)
@@ -110,7 +111,7 @@ export const changePassword = (req, res) => {
 
 export const getSpots = (req, res) => {
   try {
-    Vendor.findById(req.params.vendorId)
+    Vendor.findById(req.user._id)
     .populate('spots')
     .then(response => {
       res.json(response.spots);
@@ -120,5 +121,17 @@ export const getSpots = (req, res) => {
     });
   } catch (err) {
     res.json({ generalError: err });
+  }
+};
+
+export const signin = (req, res) => {
+  try {
+    res.json({
+      message: `User '${req.user.email}' successfully logged in`,
+      id: req.user._id,
+      token: tokenForUser(req.user),
+    });
+  } catch (err) {
+    res.json({ error: `${err}` });
   }
 };

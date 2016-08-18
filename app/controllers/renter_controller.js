@@ -2,6 +2,7 @@ import Renter from '../models/renter_model';
 import Conversation from '../models/conversation_model';
 import Spot from '../models/spot_model';
 import Vendor from '../models/vendor_model';
+import { tokenForUser } from '../utils';
 
 export const createRenter = (req, res) => {
   try {
@@ -36,6 +37,7 @@ export const createRenter = (req, res) => {
             try {
               res.json({
                 id: result._id,
+                token: tokenForUser(result),
                 message: `Renter created with \'id\' ${result._id}!`,
               });
             } catch (err) {
@@ -58,11 +60,23 @@ export const createRenter = (req, res) => {
   }
 };
 
+export const signin = (req, res) => {
+  try {
+    res.json({
+      message: `Renter '${req.user.email}' successfully logged in`,
+      id: req.user._id,
+      token: tokenForUser(req.user),
+    });
+  } catch (err) {
+    res.json({ error: `${err}` });
+  }
+};
+
 export const buySpot = (req, res) => {
   try {
     Spot.findById(req.params.spotId).then(spot => {
       if (spot.renter === null) {
-        Renter.findById(req.params.renterId).then(renter => {
+        Renter.findById(req.user._id).then(renter => {
           const updatedSpot = Object.assign({}, spot._doc, { renter: renter._id });
 
           // update the spot to show that it has a renter
@@ -72,7 +86,7 @@ export const buySpot = (req, res) => {
 
             // update the renter's spot list to include spot they bought
             const updatedRenter = Object.assign({}, renter._doc, { spots: renter.spots });
-            Renter.update({ _id: req.params.renterId }, updatedRenter)
+            Renter.update({ _id: renter._id }, updatedRenter)
             .then(renterSuccess => {
               Vendor.findById(spot.vendor)
               .then(vendor => {
@@ -80,7 +94,7 @@ export const buySpot = (req, res) => {
                 if (vendor.renters.find(curId => {
                   return String(curId).valueOf() === String(renter._id).valueOf();
                 }) === undefined) {
-                  vendor.renters.push(req.params.renterId);
+                  vendor.renters.push(renter._id);
 
                   // add this renter to the spot's vendor's list of renters
                   const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
@@ -132,7 +146,7 @@ function alreadyBoughtException() {
 
 export const getSpots = (req, res) => {
   try {
-    Renter.findById(req.params.renterId)
+    Renter.findById(req.user._id)
     .populate('spots')
     .then(response => {
       res.json(response.spots);
@@ -145,30 +159,28 @@ export const getSpots = (req, res) => {
   }
 };
 
-// problem: how to update vendor's list of renters?
 export const deleteSpot = (req, res) => {
   try {
     Spot.findById(req.params.spotId)
     .then(spot => {
-      Renter.findById(req.params.renterId)
+      Renter.findById(req.user._id)
       .then(renter => {
         const idIndex = findIndexOfItem(req.params.spotId, renter.spots);
         if (idIndex === -1) {
-          res.json({ error: `spot ${req.params.spotId} not in renter ${req.params.renterId}\'s spot list` });
+          res.json({ error: `spot ${req.params.spotId} not in renter ${renter._id}\'s spot list` });
           return;
         }
 
         renter.spots.splice(idIndex, 1);
 
         const newRenter = Object.assign({}, renter._doc, { spots: renter.spots });
-        Renter.update({ _id: req.params.renterId }, newRenter)
+        Renter.update({ _id: renter._id }, newRenter)
         .then(renterUpdateSuccess => {
           const newSpot = Object.assign({}, spot._doc, { renter: null });
           Spot.update({ _id: req.params.spotId }, newSpot)
           .then(spotUpdateSuccess => {
-            Renter.findById(req.params.renterId)
+            Renter.findById(renter._id)
             .populate('spots')
-            // fix!!!!!!
             .then(populatedRenter => {
               let vendorStillInSpots = false;
               for (let i = 0; i < populatedRenter.spots.length; i++) {
@@ -179,7 +191,7 @@ export const deleteSpot = (req, res) => {
               if (!vendorStillInSpots) {
                 Vendor.findById(spot.vendor)
                 .then(vendor => {
-                  const renterIndex = findIndexOfItem(req.params.renterId, vendor.renters);
+                  const renterIndex = findIndexOfItem(renter._id, vendor.renters);
                   if (renterIndex !== -1) {
                     vendor.renters.splice(renterIndex, 1);
                     const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
@@ -244,10 +256,10 @@ export const updateBio = (req, res) => {
       res.json({ error: 'request body must include \'bio\' field' });
       return;
     }
-    Renter.findById(req.params.renterId)
+    Renter.findById(req.user._id)
     .then(renter => {
       const updatedRenter = Object.assign({}, renter._doc, { bio: req.body.bio });
-      Renter.update({ _id: req.params.renterId }, updatedRenter)
+      Renter.update({ _id: renter._id }, updatedRenter)
       .then(success => {
         res.json(success);
       })
@@ -276,10 +288,10 @@ export const changePassword = (req, res) => {
       res.json({ error: 'request body must include \'password\' field' });
       return;
     }
-    Renter.findById(req.params.renterId)
+    Renter.findById(req.user._id)
     .then(renter => {
       const updatedRenter = Object.assign({}, renter._doc, { password: req.body.password });
-      Renter.update({ _id: req.params.renterId }, updatedRenter)
+      Renter.update({ _id: renter._id }, updatedRenter)
       .then(success => {
         res.json(success);
       })
