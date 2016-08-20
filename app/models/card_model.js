@@ -2,15 +2,39 @@ import mongoose, { Schema } from 'mongoose';
 
 // card schema
 const CardSchema = new Schema({
-  number: Number,
-  securityCode: Number,
-  expirationDate: String,
-  nameOnCard: String,
+  number: {
+    type: String,
+    default: '',
+  },
+  securityCode: {
+    type: String,
+    default: '',
+  },
+  expirationDate: {
+    type: String,
+    default: '',
+  },
+  nameOnCard: {
+    type: String,
+    default: '',
+  },
   billingAddress: {
-    streetAddress: String,
-    city: String,
-    state: String,
-    zipCode: Number,
+    streetAddress: {
+      type: String,
+      default: '',
+    },
+    city: {
+      type: String,
+      default: '',
+    },
+    state: {
+      type: String,
+      default: '',
+    },
+    zipCode: {
+      type: String,
+      default: '',
+    },
   },
   owner: { type: Schema.Types.ObjectId, ref: 'Renter' },
 });
