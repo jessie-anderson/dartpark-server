@@ -19,49 +19,50 @@ router.get('/', (req, res) => {
 });
 
 // car routes
-router.route(requireAuthRenter, '/cars')
-      .post(Car.createCar);
+router.route('/cars')
+      .post(requireAuthRenter, Car.createCar);
 
-router.route(requireAuthRenter, '/cars/:carId')
-      .put(Car.updateCar)
-      .delete(Car.deleteCar);
+router.route('/cars/:carId')
+      .put(requireAuthRenter, Car.updateCar)
+      .delete(requireAuthRenter, Car.deleteCar);
 
 // card routes
-router.route(requireAuthRenter, '/cards')
-      .post(Card.createCard);
+router.route('/cards')
+      .post(requireAuthRenter, Card.createCard);
 
-router.route(requireAuthRenter, '/cards/:cardId')
-      .put(Card.updateCard)
-      .delete(Card.deleteCard);
+router.route('/cards/:cardId')
+      .put(requireAuthRenter, Card.updateCard)
+      .delete(requireAuthRenter, Card.deleteCard);
 
 // spot routes: vendor
-router.route(requireAuthVendor, '/vendor/spots')
-      .post(Spot.createSpot)
-      .get(Vendor.getSpots);
+router.route('/vendor/spots')
+      .post(requireAuthVendor, Spot.createSpot)
+      .get(requireAuthVendor, Vendor.getSpots);
 
 
-router.route(requireAuthVendor, '/vendor/spots/:spotId')
-      .put(Spot.updateSpot)
-      .delete(Spot.deleteSpot)
-      .get(Spot.getSpot);
+router.route('/vendor/spots/:spotId')
+      .put(requireAuthVendor, Spot.updateSpot)
+      .delete(requireAuthVendor, Spot.deleteSpot)
+      .get(requireAuthVendor, Spot.getSpot);
 
 // spot routes: renter
-router.route(requireAuthRenter, '/buySpot/:spotId')
-      .put(Renter.buySpot);
+router.route('/buySpot/:spotId')
+      .put(requireAuthRenter, Renter.buySpot);
 
-router.route(requireAuthRenter, '/renter/spots')
-      .get(Renter.getSpots);
+router.route('/renter/spots')
+      .get(requireAuthRenter, Renter.getSpots);
 
-router.route(requireAuthRenter, '/renter/spots/:spotId')
-      .delete(Renter.deleteSpot);
+router.route('/renter/spots/:spotId')
+      .get(requireAuthRenter, Spot.getSpot)
+      .delete(requireAuthRenter, Renter.deleteSpot);
 
 // signup routes
 router.route('/renter/signup')
       .post(Renter.createRenter);
-
+//
 router.route('/renter/signin')
       .post(requireSigninRenter, Renter.signin);
-
+//
 router.route('/vendor/signup')
       .post(Vendor.createVendor);
 
@@ -81,19 +82,19 @@ router.route('/conversations/:conversationId')
       .delete(Conversation.deleteConversation);
 
 // change password: renter
-router.route(requireAuthRenter, '/renter/changePassword')
-      .put(Renter.changePassword);
+router.route('/renter/changePassword')
+      .put(requireAuthRenter, Renter.changePassword);
 
 // change password: vendor
-router.route(requireAuthVendor, '/vendor/changePassword')
-      .put(Vendor.changePassword);
+router.route('/vendor/changePassword')
+      .put(requireAuthVendor, Vendor.changePassword);
 
 // change bio: renter
-router.route(requireAuthRenter, '/renter/changeBio')
-      .put(Renter.updateBio);
+router.route('/renter/changeBio')
+      .put(requireAuthRenter, Renter.updateBio);
 
 // change bio: vendor
-router.route(requireAuthVendor, '/vendor/changeBio')
-      .put(Vendor.updateBio);
+router.route('/vendor/changeBio')
+      .put(requireAuthVendor, Vendor.updateBio);
 
 export default router;
