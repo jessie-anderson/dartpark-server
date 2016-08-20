@@ -15,10 +15,10 @@ export const createCard = (req, res) => {
     card.expirationDate = req.body.expirationDate;
     card.nameOnCard = req.body.nameOnCard;
     card.billingAddress = req.body.billingAddress;
-    card.owner = req.params.renterId; // make sure user is the right thing to use here
+    card.owner = req.user._id; // make sure user is the right thing to use here
     card.save()
     .then(savedCard => {
-      Renter.findById(req.params.renterId)
+      Renter.findById(req.user._id)
       .then(renter => {
         renter.cards.push(savedCard._id);
         const updatedRenter = Object.assign({}, renter._doc, { cards: renter.cards });
@@ -62,7 +62,7 @@ export const updateCard = (req, res) => {
       const updatedCard = Object.assign({}, card._doc, updates);
       Card.update({ _id: req.params.cardId }, updatedCard)
       .then(newCard => {
-        res.json({ message: 'Car information successfully updated!' });
+        res.json({ message: 'Card information successfully updated!' });
       })
       .catch(err => {
         res.json({ cardUpdateError: err });
