@@ -3,7 +3,7 @@ import Vendor from '../models/vendor_model';
 
 export const createSpot = (req, res) => {
   const spot = new Spot();
-  spot.vendor = req.params.vendorId;
+  spot.vendor = req.user._id;
   if (typeof req.body.address === 'undefined' || typeof req.body.price === 'undefined'
   || typeof req.body.startDate === 'undefined' || typeof req.body.endDate === 'undefined'
   || typeof req.body.number === 'undefined') {
@@ -23,11 +23,12 @@ export const createSpot = (req, res) => {
 
   spot.save()
   .then(newSpot => {
-    Vendor.findById(req.params.vendorId)
+    console.log(req.user);
+    Vendor.findById(req.user._id)
     .then(vendor => {
       vendor.spots.push(newSpot._id);
       const updatedVendor = Object.assign({}, vendor._doc, { spots: vendor.spots });
-      Vendor.update({ _id: req.params.vendorId }, updatedVendor)
+      Vendor.update({ _id: req.user._id }, updatedVendor)
       .then(vendorUpdateSuccess => {
         res.json(vendorUpdateSuccess);
       })

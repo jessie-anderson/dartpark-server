@@ -15,10 +15,10 @@ export const createCar = (req, res) => {
     car.year = req.body.year;
     car.color = req.body.color;
     car.plateNumber = req.body.plateNumber;
-    car.owner = req.params.renterId;
+    car.owner = req.user._id;
     car.save()
     .then(savedCar => {
-      Renter.findById(req.params.renterId)
+      Renter.findById(req.user._id)
       .then(renter => {
         renter.cars.push(savedCar._id);
         const updatedRenter = Object.assign({}, renter._doc, { cars: renter.cars });
@@ -83,7 +83,7 @@ export const deleteCar = (req, res) => {
     .then(populatedCar => {
       const carIdIndex = findIndexOfItem(req.params.carId, populatedCar.owner.cars);
       if (carIdIndex < 0) {
-        res.json({ error: 'car ID not found ' });
+        res.json({ error: 'car ID not found' });
         return;
       }
       populatedCar.owner.cars.splice(carIdIndex, 1);
