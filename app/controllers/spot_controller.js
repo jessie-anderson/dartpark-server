@@ -29,8 +29,15 @@ export const createSpot = (req, res) => {
       vendor.spots.push(newSpot._id);
       const updatedVendor = Object.assign({}, vendor._doc, { spots: vendor.spots });
       Vendor.update({ _id: req.user._id }, updatedVendor)
-      .then(vendorUpdateSuccess => {
-        res.json(vendorUpdateSuccess);
+      .then(newVendor => {
+        Vendor.findOne({ _id: vendor._id })
+        .populate('spots')
+        .then(populatedVendor => {
+          res.json({ vendor: populatedVendor, spot: newSpot });
+        })
+        .catch(err => {
+          res.json({ vendorPopulateError: err });
+        });
       })
       .catch(err => {
         res.json({ vendorUpdateError: err });
@@ -70,7 +77,20 @@ export const updateSpot = (req, res) => {
       const updatedSpot = Object.assign({}, spot._doc, updates);
       Spot.update({ _id: req.params.spotId }, updatedSpot)
       .then(response => {
-        res.json({ message: 'Spot information successfully updated!' });
+        Vendor.findOne({ _id: spot.vendor })
+        .populate('cars')
+        .then(populatedVendor => {
+          Spot.findById(req.params.spotId)
+          .then(newSpot => {
+            res.json({ vendor: populatedVendor, spot: response });
+          })
+          .catch(err => {
+            res.json({ spotFindError2: err });
+          });
+        })
+        .catch(err => {
+          res.json({ vendorPopulateError: err });
+        });
       })
       .catch(err => {
         res.json(err);
@@ -115,10 +135,16 @@ export const deleteSpot = (req, res) => {
         populatedSpot.vendor.spots.splice(spotIndex, 1);
         const updatedVendor = Object.assign({}, populatedSpot.vendor._doc, { spots: populatedSpot.vendor.spots });
         Vendor.update({ _id: populatedSpot.vendor._id }, updatedVendor)
-        .then(vendorUpdateSuccess => {
+        .then(update => {
           Spot.findById(req.params.spotId).remove()
           .then(success => {
-            res.json(success);
+            Vendor.findById(populatedSpot.vendor._id)
+            .then(vendor => {
+              res.json(vendor);
+            })
+            .catch(err => {
+              res.json({ vendorFindError: err });
+            });
           })
           .catch(err => {
             res.json({ spotDeleteError: err });

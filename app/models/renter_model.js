@@ -9,7 +9,7 @@ const RenterSchema = new Schema({
     lowercase: true,
   },
   password: String,
-  name: String,
+  username: String,
   bio: {
     type: String,
     default: '',
