@@ -9,7 +9,7 @@ const VendorSchema = new Schema({
     lowercase: true,
   },
   password: String,
-  name: String,
+  username: String,
   bio: String,
   spots: [{
     type: Schema.Types.ObjectId,

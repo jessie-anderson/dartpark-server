@@ -9,14 +9,14 @@ export const createVendor = (req, res) => {
     const conversationHead = new Conversation();
 
     if (typeof req.body.email === 'undefined' || typeof req.body.password === 'undefined' ||
-      typeof req.body.name === 'undefined') {
+      typeof req.body.username === 'undefined') {
       res.json({
-        error: 'ERR: Vendors need \'email\', \'password\', and  \'name\' fields',
+        error: 'ERR: Vendors need \'email\', \'password\', and  \'username\' fields',
       });
     } else {
       vendor.email = req.body.email;
       vendor.password = req.body.password;
-      vendor.name = req.body.name;
+      vendor.username = req.body.username;
 
       if (typeof vendor.bio !== 'undefined') {
         vendor.bio = req.body.bio;
@@ -35,7 +35,7 @@ export const createVendor = (req, res) => {
           .then(result => {
             try {
               res.json({
-                id: result._id,
+                vendor: result,
                 token: tokenForUser(result),
                 message: `Vendor created with \'id\' ${result._id}!`,
               });
@@ -70,7 +70,13 @@ export const updateBio = (req, res) => {
       const updatedVendor = Object.assign({}, vendor._doc, { bio: req.body.bio });
       Vendor.update({ _id: req.user._id }, updatedVendor)
       .then(success => {
-        res.json(success);
+        Vendor.findById(req.user._id)
+        .then(newVendor => {
+          res.json(newVendor);
+        })
+        .catch(err => {
+          res.json({ findVendorError2: err });
+        });
       })
       .catch(err => {
         res.json({ vendorUpdateError: err });
@@ -95,7 +101,13 @@ export const changePassword = (req, res) => {
       const updatedVendor = Object.assign({}, vendor._doc, { password: req.body.password });
       Vendor.update({ _id: req.params.vendorId }, updatedVendor)
       .then(success => {
-        res.json(success);
+        Vendor.findById(req.user._id)
+        .then(newVendor => {
+          res.json(newVendor);
+        })
+        .catch(err => {
+          res.json({ findVendorError2: err });
+        });
       })
       .catch(err => {
         res.json({ vendorUpdateError: err });
@@ -126,10 +138,15 @@ export const getSpots = (req, res) => {
 
 export const signin = (req, res) => {
   try {
-    res.json({
-      message: `User '${req.user.email}' successfully logged in`,
-      id: req.user._id,
-      token: tokenForUser(req.user),
+    Vendor.findById(req.user._id)
+    .then(vendor => {
+      res.json({
+        vendor,
+        token: tokenForUser(req.user),
+      });
+    })
+    .catch(err => {
+      res.json({ vendorFindError: err });
     });
   } catch (err) {
     res.json({ error: `${err}` });

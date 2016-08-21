@@ -20,10 +20,12 @@ router.get('/', (req, res) => {
 
 // car routes
 router.route('/cars')
-      .post(requireAuthRenter, Car.createCar);
+      .post(requireAuthRenter, Car.createCar)
+      .get(requireAuthRenter, Car.getCars);
 
 router.route('/cars/:carId')
       .put(requireAuthRenter, Car.updateCar)
+      .get(requireAuthRenter, Car.getCar)
       .delete(requireAuthRenter, Car.deleteCar);
 
 // card routes
@@ -59,10 +61,10 @@ router.route('/renter/spots/:spotId')
 // signup routes
 router.route('/renter/signup')
       .post(Renter.createRenter);
-//
+
 router.route('/renter/signin')
       .post(requireSigninRenter, Renter.signin);
-//
+
 router.route('/vendor/signup')
       .post(Vendor.createVendor);
 

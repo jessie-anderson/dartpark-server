@@ -14,7 +14,7 @@ const CarSchema = new Schema({
     type: String,
     default: '',
   },
-  color: {
+  paintcolor: {
     type: String,
     default: '',
   },
