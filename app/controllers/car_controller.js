@@ -5,15 +5,15 @@ export const createCar = (req, res) => {
   try {
     const car = new Car();
     if (typeof req.body.make === 'undefined' || typeof req.body.model === 'undefined'
-    || typeof req.body.year === 'undefined' || typeof req.body.color === 'undefined'
+    || typeof req.body.year === 'undefined' || typeof req.body.paintcolor === 'undefined'
     || typeof req.body.plateNumber === 'undefined') {
-      res.json({ error: 'request body must include fields \'make\', \'model\', \'year\', \'color\', and \'plateNumber\'' });
+      res.json({ error: 'request body must include fields \'make\', \'model\', \'year\', \'paintcolor\', and \'plateNumber\'' });
       return;
     }
     car.make = req.body.make;
     car.model = req.body.model;
     car.year = req.body.year;
-    car.color = req.body.color;
+    car.paintcolor = req.body.paintcolor;
     car.plateNumber = req.body.plateNumber;
     car.owner = req.user._id;
     car.save()
@@ -24,7 +24,14 @@ export const createCar = (req, res) => {
         const updatedRenter = Object.assign({}, renter._doc, { cars: renter.cars });
         Renter.update({ _id: renter._id }, updatedRenter)
         .then(success => {
-          res.json(success);
+          Renter.findOne({ _id: renter._id })
+          .populate('cars')
+          .then(populatedRenter => {
+            res.json({ renter: populatedRenter, car: savedCar });
+          })
+          .catch(err => {
+            res.json({ renterPopulateError: err });
+          });
         })
         .catch(err => {
           res.json({ renterUpdateError: err });
@@ -45,7 +52,7 @@ export const createCar = (req, res) => {
 export const updateCar = (req, res) => {
   try {
     if (typeof req.body.make === 'undefined' || typeof req.body.model === 'undefined'
-    || typeof req.body.year === 'undefined' || typeof req.body.color === 'undefined'
+    || typeof req.body.year === 'undefined' || typeof req.body.paintcolor === 'undefined'
     || typeof req.body.plateNumber === 'undefined') {
       res.json({ error: 'request body must include fields \'make\', \'model\', \'year\', \'color\', and \'plateNumber\'' });
       return;
@@ -56,13 +63,17 @@ export const updateCar = (req, res) => {
         make: req.body.make,
         model: req.body.model,
         year: req.body.year,
-        color: req.body.color,
+        paintcolor: req.body.paintcolor,
         plateNumber: req.body.plateNumber,
       };
       const updatedCar = Object.assign({}, car._doc, updates);
       Car.update({ _id: req.params.carId }, updatedCar)
       .then(newCar => {
-        res.json({ message: 'Car information successfully updated!' });
+        Renter.findOne({ _id: newCar.owner })
+        .populate('cars')
+        .then(populatedRenter => {
+          res.json({ renter: populatedRenter, car: newCar });
+        });
       })
       .catch(err => {
         res.json({ carUpdateError: err });
@@ -92,7 +103,15 @@ export const deleteCar = (req, res) => {
       .then(renterUpdateSuccess => {
         Car.findById(req.params.carId).remove()
         .then(success => {
-          res.json(success);
+          Renter.findOne({ _id: updatedRenter._id })
+          .populate('cars')
+          .then(populatedRenter => {
+            // return new list of cars and updated renter to frontend
+            res.json(populatedRenter);
+          })
+          .catch(err => {
+            res.json({ renterPopulateError: err });
+          });
         })
         .catch(err => {
           res.json({ carDeleteError: err });
@@ -104,6 +123,35 @@ export const deleteCar = (req, res) => {
     })
     .catch(err => {
       res.json({ carFindError: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};
+
+export const getCar = (req, res) => {
+  try {
+    Car.findById(req.params.carId)
+    .then(car => {
+      res.json(car);
+    })
+    .catch(err => {
+      res.json({ carFindError: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};
+
+export const getCars = (req, res) => {
+  try {
+    Renter.findOne({ _id: req.user._id })
+    .populate('cars')
+    .then(populatedRenter => {
+      res.json(populatedRenter.cars);
+    })
+    .catch(err => {
+      res.json({ renterPopulateError: err });
     });
   } catch (err) {
     res.json({ generalError: err });

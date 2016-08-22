@@ -10,14 +10,14 @@ export const createRenter = (req, res) => {
     const conversationHead = new Conversation();
 
     if (typeof req.body.email === 'undefined' || typeof req.body.password === 'undefined' ||
-      typeof req.body.name === 'undefined') {
+      typeof req.body.username === 'undefined') {
       res.json({
-        error: 'ERR: Renters need \'email\', \'password\', and  \'name\' fields',
+        error: 'ERR: Renters need \'email\', \'password\', and  \'username\' fields',
       });
     } else {
       renter.email = req.body.email;
       renter.password = req.body.password;
-      renter.name = req.body.name;
+      renter.username = req.body.username;
 
       if (typeof renter.bio !== 'undefined') {
         renter.bio = req.body.bio;
@@ -36,7 +36,7 @@ export const createRenter = (req, res) => {
           .then(result => {
             try {
               res.json({
-                id: result._id,
+                renter: result,
                 token: tokenForUser(result),
                 message: `Renter created with \'id\' ${result._id}!`,
               });
@@ -62,10 +62,15 @@ export const createRenter = (req, res) => {
 
 export const signin = (req, res) => {
   try {
-    res.json({
-      message: `Renter '${req.user.email}' successfully logged in`,
-      id: req.user._id,
-      token: tokenForUser(req.user),
+    Renter.findById(req.user._id)
+    .then(renter => {
+      res.json({
+        renter,
+        token: tokenForUser(req.user),
+      });
+    })
+    .catch(err => {
+      res.json({ renterFindError: err });
     });
   } catch (err) {
     res.json({ error: `${err}` });
@@ -100,7 +105,21 @@ export const buySpot = (req, res) => {
                   const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
                   Vendor.update({ _id: vendor._id }, updatedVendor)
                   .then(vendorSuccess => {
-                    res.json(vendorSuccess);
+                    // find updated renter and spot and send them to frontend
+                    Renter.findOne({ _id: renter._id })
+                    .populate('spots')
+                    .then(newRenter => {
+                      Spot.findById(req.params.spotId)
+                      .then(newSpot => {
+                        res.json({ renter: newRenter, spot: newSpot });
+                      })
+                      .catch(err => {
+                        res.json({ spotFindError: err });
+                      });
+                    })
+                    .catch(err => {
+                      res.json({ renterFindError: err });
+                    });
                   })
                   .catch(err => {
                     res.json({ errorUpdatingVendor: err });
@@ -112,7 +131,6 @@ export const buySpot = (req, res) => {
               .catch(err => {
                 res.json({ errorFindingVendor: err });
               });
-              res.json(renterSuccess);
             })
             .catch(err => {
               res.json({ errorUpdatingRenter: err });
@@ -197,7 +215,14 @@ export const deleteSpot = (req, res) => {
                     const updatedVendor = Object.assign({}, vendor._doc, { renters: vendor.renters });
                     Vendor.update({ _id: vendor._id }, updatedVendor)
                     .then(vendorUpdateSuccess => {
-                      res.json(vendorUpdateSuccess);
+                      Renter.findOne({ _id: renter._id })
+                      .populate('spots')
+                      .then(updatedRenter => {
+                        res.json(updatedRenter);
+                      })
+                      .catch(err => {
+                        res.json({ newRenterFindError: err });
+                      });
                     })
                     .catch(err => {
                       res.json({ vendorUpdateError: err });
@@ -261,7 +286,13 @@ export const updateBio = (req, res) => {
       const updatedRenter = Object.assign({}, renter._doc, { bio: req.body.bio });
       Renter.update({ _id: renter._id }, updatedRenter)
       .then(success => {
-        res.json(success);
+        Renter.findById(req.user._id)
+        .then(newRenter => {
+          res.json(newRenter);
+        })
+        .catch(err => {
+          res.json({ renterFindError2: err });
+        });
       })
       .catch(err => {
         res.json({ renterUpdateError: err });
@@ -293,7 +324,13 @@ export const changePassword = (req, res) => {
       const updatedRenter = Object.assign({}, renter._doc, { password: req.body.password });
       Renter.update({ _id: renter._id }, updatedRenter)
       .then(success => {
-        res.json(success);
+        Renter.findById(req.user._id)
+        .then(newRenter => {
+          res.json(newRenter);
+        })
+        .catch(err => {
+          res.json({ renterFindError2: err });
+        });
       })
       .catch(err => {
         res.json({ renterUpdateError: err });
