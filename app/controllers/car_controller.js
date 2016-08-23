@@ -54,7 +54,7 @@ export const updateCar = (req, res) => {
     if (typeof req.body.make === 'undefined' || typeof req.body.model === 'undefined'
     || typeof req.body.year === 'undefined' || typeof req.body.paintcolor === 'undefined'
     || typeof req.body.plateNumber === 'undefined') {
-      res.json({ error: 'request body must include fields \'make\', \'model\', \'year\', \'color\', and \'plateNumber\'' });
+      res.json({ error: 'request body must include fields \'make\', \'model\', \'year\', \'paintcolor\', and \'plateNumber\'' });
       return;
     }
     Car.findById(req.params.carId)
@@ -68,11 +68,20 @@ export const updateCar = (req, res) => {
       };
       const updatedCar = Object.assign({}, car._doc, updates);
       Car.update({ _id: req.params.carId }, updatedCar)
-      .then(newCar => {
-        Renter.findOne({ _id: newCar.owner })
-        .populate('cars')
-        .then(populatedRenter => {
-          res.json({ renter: populatedRenter, car: newCar });
+      .then(success => {
+        Car.findById(req.params.carId)
+        .then(newCar => {
+          Renter.findOne({ _id: newCar.owner })
+          .populate('cars')
+          .then(populatedRenter => {
+            res.json({ renter: populatedRenter, car: newCar });
+          })
+          .catch(err => {
+            res.json({ renterPopulateError: err });
+          });
+        })
+        .catch(err => {
+          res.json({ carFindError2: err });
         });
       })
       .catch(err => {

@@ -78,11 +78,11 @@ export const updateSpot = (req, res) => {
       Spot.update({ _id: req.params.spotId }, updatedSpot)
       .then(response => {
         Vendor.findOne({ _id: spot.vendor })
-        .populate('cars')
+        .populate('spots')
         .then(populatedVendor => {
           Spot.findById(req.params.spotId)
           .then(newSpot => {
-            res.json({ vendor: populatedVendor, spot: response });
+            res.json({ vendor: populatedVendor, spot: newSpot });
           })
           .catch(err => {
             res.json({ spotFindError2: err });
