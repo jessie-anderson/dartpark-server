@@ -3,6 +3,7 @@ import Conversation from '../models/conversation_model';
 import Spot from '../models/spot_model';
 import Vendor from '../models/vendor_model';
 import { tokenForUser } from '../utils';
+import bcrypt from 'bcrypt-nodejs';
 
 export const createRenter = (req, res) => {
   try {
@@ -135,8 +136,6 @@ export const buySpot = (req, res) => {
             .catch(err => {
               res.json({ errorUpdatingRenter: err });
             });
-
-            res.json(spotSuccess);
           })
           .catch(err => {
             res.json({ errorUpdatingSpot: err });
@@ -237,7 +236,6 @@ export const deleteSpot = (req, res) => {
             .catch(err => {
               res.json({ spotPopulationError: err });
             });
-            res.json(spotUpdateSuccess);
           })
           .catch(err => {
             res.json({ spotUpdateError: err });
@@ -321,19 +319,39 @@ export const changePassword = (req, res) => {
     }
     Renter.findById(req.user._id)
     .then(renter => {
-      const updatedRenter = Object.assign({}, renter._doc, { password: req.body.password });
-      Renter.update({ _id: renter._id }, updatedRenter)
-      .then(success => {
-        Renter.findById(req.user._id)
-        .then(newRenter => {
-          res.json(newRenter);
-        })
-        .catch(err => {
-          res.json({ renterFindError2: err });
-        });
-      })
-      .catch(err => {
-        res.json({ renterUpdateError: err });
+      bcrypt.genSalt(10, (err, salt) => {
+        try {
+          if (err) {
+            res.json({ saltErr: err });
+            return;
+          }
+          bcrypt.hash(req.body.password, salt, null, (err, hash) => {
+            try {
+              if (err) {
+                res.json({ hashErr: err });
+                return;
+              }
+              const updatedRenter = Object.assign({}, renter._doc, { password: hash });
+              Renter.update({ _id: renter._id }, updatedRenter)
+              .then(success => {
+                Renter.findById(req.user._id)
+                .then(newRenter => {
+                  res.json(newRenter);
+                })
+                .catch(err => {
+                  res.json({ renterFindError2: err });
+                });
+              })
+              .catch(err => {
+                res.json({ renterUpdateError: err });
+              });
+            } catch (err) {
+              res.json({ hashErr: err });
+            }
+          });
+        } catch (err) {
+          res.json({ saltErr: err });
+        }
       });
     })
     .catch(err => {
