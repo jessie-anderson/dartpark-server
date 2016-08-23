@@ -250,7 +250,7 @@ const getMessagesHelper = (resolve, revoke, currConversation, conversationsArray
       latestConversation = conversationsArray[conversationsArray.length - 1];
     }
 
-    Message.findById(currConversation.messages[i])
+    Message.findById(currConversation.messages[limit === 1 ? currConversation.messages.length - 1 : i])
     .then(message => {
       try {
         latestConversation.messages.push(message);
