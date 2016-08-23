@@ -1,5 +1,6 @@
 import Vendor from '../models/vendor_model';
 import Conversation from '../models/conversation_model';
+import bcrypt from 'bcrypt-nodejs';
 
 import { tokenForUser } from '../utils';
 
@@ -98,19 +99,39 @@ export const changePassword = (req, res) => {
     }
     Vendor.findById(req.user._id)
     .then(vendor => {
-      const updatedVendor = Object.assign({}, vendor._doc, { password: req.body.password });
-      Vendor.update({ _id: req.params.vendorId }, updatedVendor)
-      .then(success => {
-        Vendor.findById(req.user._id)
-        .then(newVendor => {
-          res.json(newVendor);
-        })
-        .catch(err => {
-          res.json({ findVendorError2: err });
-        });
-      })
-      .catch(err => {
-        res.json({ vendorUpdateError: err });
+      bcrypt.genSalt(10, (err, salt) => {
+        try {
+          if (err) {
+            res.json({ saltErr: err });
+            return;
+          }
+          bcrypt.hash(req.body.password, salt, null, (err, hash) => {
+            try {
+              if (err) {
+                res.json({ hashErr: err });
+                return;
+              }
+              const updatedVendor = Object.assign({}, vendor._doc, { password: hash });
+              Vendor.update({ _id: vendor._id }, updatedVendor)
+              .then(success => {
+                Vendor.findById(req.user._id)
+                .then(newVendor => {
+                  res.json(newVendor);
+                })
+                .catch(err => {
+                  res.json({ vendorFindError2: err });
+                });
+              })
+              .catch(err => {
+                res.json({ vendorUpdateError: err });
+              });
+            } catch (err) {
+              res.json({ hashErr: err });
+            }
+          });
+        } catch (err) {
+          res.json({ saltErr: err });
+        }
       });
     })
     .catch(err => {

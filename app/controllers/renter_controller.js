@@ -3,6 +3,7 @@ import Conversation from '../models/conversation_model';
 import Spot from '../models/spot_model';
 import Vendor from '../models/vendor_model';
 import { tokenForUser } from '../utils';
+import bcrypt from 'bcrypt-nodejs';
 
 export const createRenter = (req, res) => {
   try {
@@ -11,6 +12,7 @@ export const createRenter = (req, res) => {
 
     if (typeof req.body.email === 'undefined' || typeof req.body.password === 'undefined' ||
       typeof req.body.username === 'undefined') {
+      console.log('not all fields present');
       res.json({
         error: 'ERR: Renters need \'email\', \'password\', and  \'username\' fields',
       });
@@ -19,7 +21,7 @@ export const createRenter = (req, res) => {
       renter.password = req.body.password;
       renter.username = req.body.username;
 
-      if (typeof renter.bio !== 'undefined') {
+      if (typeof req.body.bio !== 'undefined') {
         renter.bio = req.body.bio;
       }
 
@@ -41,21 +43,26 @@ export const createRenter = (req, res) => {
                 message: `Renter created with \'id\' ${result._id}!`,
               });
             } catch (err) {
+              console.log(`res json error: ${err}`);
               res.json({ error: `${err}` });
             }
           })
           .catch(error => {
+            console.log(`renter save error: ${error}`);
             res.json({ error: `${error}` });
           });
         } catch (err) {
+          console.log(`general error level 2: ${err}`);
           res.json({ error: `${err}` });
         }
       })
       .catch(error => {
+        console.log(`conversation save error: ${error}`);
         res.json({ error: `${error}` });
       });
     }
   } catch (err) {
+    console.log(`general error: ${err}`);
     res.json({ error: `${err}` });
   }
 };
@@ -135,8 +142,6 @@ export const buySpot = (req, res) => {
             .catch(err => {
               res.json({ errorUpdatingRenter: err });
             });
-
-            res.json(spotSuccess);
           })
           .catch(err => {
             res.json({ errorUpdatingSpot: err });
@@ -237,7 +242,6 @@ export const deleteSpot = (req, res) => {
             .catch(err => {
               res.json({ spotPopulationError: err });
             });
-            res.json(spotUpdateSuccess);
           })
           .catch(err => {
             res.json({ spotUpdateError: err });
@@ -321,19 +325,39 @@ export const changePassword = (req, res) => {
     }
     Renter.findById(req.user._id)
     .then(renter => {
-      const updatedRenter = Object.assign({}, renter._doc, { password: req.body.password });
-      Renter.update({ _id: renter._id }, updatedRenter)
-      .then(success => {
-        Renter.findById(req.user._id)
-        .then(newRenter => {
-          res.json(newRenter);
-        })
-        .catch(err => {
-          res.json({ renterFindError2: err });
-        });
-      })
-      .catch(err => {
-        res.json({ renterUpdateError: err });
+      bcrypt.genSalt(10, (err, salt) => {
+        try {
+          if (err) {
+            res.json({ saltErr: err });
+            return;
+          }
+          bcrypt.hash(req.body.password, salt, null, (err, hash) => {
+            try {
+              if (err) {
+                res.json({ hashErr: err });
+                return;
+              }
+              const updatedRenter = Object.assign({}, renter._doc, { password: hash });
+              Renter.update({ _id: renter._id }, updatedRenter)
+              .then(success => {
+                Renter.findById(req.user._id)
+                .then(newRenter => {
+                  res.json(newRenter);
+                })
+                .catch(err => {
+                  res.json({ renterFindError2: err });
+                });
+              })
+              .catch(err => {
+                res.json({ renterUpdateError: err });
+              });
+            } catch (err) {
+              res.json({ hashErr: err });
+            }
+          });
+        } catch (err) {
+          res.json({ saltErr: err });
+        }
       });
     })
     .catch(err => {
