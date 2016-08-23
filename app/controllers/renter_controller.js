@@ -12,6 +12,7 @@ export const createRenter = (req, res) => {
 
     if (typeof req.body.email === 'undefined' || typeof req.body.password === 'undefined' ||
       typeof req.body.username === 'undefined') {
+      console.log('not all fields present');
       res.json({
         error: 'ERR: Renters need \'email\', \'password\', and  \'username\' fields',
       });
@@ -20,7 +21,7 @@ export const createRenter = (req, res) => {
       renter.password = req.body.password;
       renter.username = req.body.username;
 
-      if (typeof renter.bio !== 'undefined') {
+      if (typeof req.body.bio !== 'undefined') {
         renter.bio = req.body.bio;
       }
 
@@ -42,21 +43,26 @@ export const createRenter = (req, res) => {
                 message: `Renter created with \'id\' ${result._id}!`,
               });
             } catch (err) {
+              console.log(`res json error: ${err}`);
               res.json({ error: `${err}` });
             }
           })
           .catch(error => {
+            console.log(`renter save error: ${error}`);
             res.json({ error: `${error}` });
           });
         } catch (err) {
+          console.log(`general error level 2: ${err}`);
           res.json({ error: `${err}` });
         }
       })
       .catch(error => {
+        console.log(`conversation save error: ${error}`);
         res.json({ error: `${error}` });
       });
     }
   } catch (err) {
+    console.log(`general error: ${err}`);
     res.json({ error: `${err}` });
   }
 };
