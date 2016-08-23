@@ -237,24 +237,61 @@ const spliceIntoBeginning = (newItem, lists) => {
 
 const getMessagesHelper = (resolve, revoke, currConversation, conversationsArray, limit, i) => {
   try {
+    let latestConversation;
+
     if (i === 0) {
-      conversationsArray.push({
+      latestConversation = {
         id: currConversation._id,
         renter: currConversation.renter,
         vendor: currConversation.vendor,
         messages: [],
-      });
+      };
+    } else {
+      latestConversation = conversationsArray[conversationsArray.length - 1];
     }
 
     Message.findById(currConversation.messages[i])
     .then(message => {
       try {
-        conversationsArray[conversationsArray.length - 1].messages.push(message);
+        latestConversation.messages.push(message);
 
-        if (i === currConversation.messages.length - 1 || (limit !== null && i === limit - 1)) {
-          resolve();
+        if (i === 0) {
+          Renter.findById(currConversation.renter)
+          .then(renterData => {
+            try {
+              Vendor.findById(currConversation.vendor)
+              .then(vendorData => {
+                try {
+                  latestConversation.usernameRenter = renterData.username;
+                  latestConversation.usernameVendor = vendorData.username;
+
+                  conversationsArray.push(latestConversation);
+
+                  if (i === currConversation.messages.length - 1 || (limit !== null && i === limit - 1)) {
+                    resolve();
+                  } else {
+                    getMessagesHelper(resolve, revoke, currConversation, conversationsArray, limit, i + 1);
+                  }
+                } catch (err) {
+                  revoke(err);
+                }
+              })
+              .catch(error => {
+                revoke(error);
+              });
+            } catch (err) {
+              revoke(err);
+            }
+          })
+          .catch(error => {
+            revoke(error);
+          });
         } else {
-          getMessagesHelper(resolve, revoke, currConversation, conversationsArray, limit, i + 1);
+          if (i === currConversation.messages.length - 1 || (limit !== null && i === limit - 1)) {
+            resolve();
+          } else {
+            getMessagesHelper(resolve, revoke, currConversation, conversationsArray, limit, i + 1);
+          }
         }
       } catch (err) {
         revoke(err);
