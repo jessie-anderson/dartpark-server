@@ -23,7 +23,7 @@ const SpotSchema = new Schema({
     type: String,
     default: '',
   },
-  number: {
+  spotName: {
     type: String,
     default: '',
   },
