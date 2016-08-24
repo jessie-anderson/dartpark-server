@@ -28,6 +28,9 @@ router.route('/cars/:carId')
       .get(requireAuthRenter, Car.getCar)
       .delete(requireAuthRenter, Car.deleteCar);
 
+router.route('/carsAndSpots')
+      .get(requireAuthRenter, Renter.getSpotsAndCars);
+
 // card routes
 router.route('/cards')
       .post(requireAuthRenter, Card.createCard);

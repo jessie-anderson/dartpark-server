@@ -184,8 +184,12 @@ export const getAllSpots = (req, res) => {
     Spot.find()
     .populate('vendor')
     .then(spots => {
-      console.log(spots);
-      res.json(spots);
+      let availableSpots = [];
+      spots.forEach(spot => {
+        if (spot.renter === null) availableSpots = availableSpots.concat([spot]);
+      });
+      console.log(availableSpots);
+      res.json(availableSpots);
     })
     .catch(err => {
       res.json({ spotFindError: err });
