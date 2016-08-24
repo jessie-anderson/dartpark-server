@@ -368,6 +368,17 @@ export const changePassword = (req, res) => {
   }
 };
 
+export const getSpotsAndCars = (req, res) => {
+  Renter.findById(req.user._id)
+  .populate('spots cars')
+  .then(renter => {
+    res.json(renter);
+  })
+  .catch(err => {
+    res.json({ renterPopulateError: err });
+  });
+};
+
 // export const updatePicture = (req, res) => {
 
 // }
