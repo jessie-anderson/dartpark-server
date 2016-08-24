@@ -279,15 +279,15 @@ function findIndexOfItem(item, list) {
 
 // ========================= add routes for these ========================== //
 
-export const updateBio = (req, res) => {
+export const updateBioAndName = (req, res) => {
   try {
-    if (typeof req.body.bio === 'undefined') {
-      res.json({ error: 'request body must include \'bio\' field' });
+    if (typeof req.body.bio === 'undefined' || typeof req.body.username === 'undefined') {
+      res.json({ error: 'request body must include \'bio\' and \'name\' fields' });
       return;
     }
     Renter.findById(req.user._id)
     .then(renter => {
-      const updatedRenter = Object.assign({}, renter._doc, { bio: req.body.bio });
+      const updatedRenter = Object.assign({}, renter._doc, { bio: req.body.bio, username: req.body.username });
       Renter.update({ _id: renter._id }, updatedRenter)
       .then(success => {
         Renter.findById(req.user._id)

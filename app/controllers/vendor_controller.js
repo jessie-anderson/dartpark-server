@@ -60,15 +60,15 @@ export const createVendor = (req, res) => {
   }
 };
 
-export const updateBio = (req, res) => {
+export const updateBioAndName = (req, res) => {
   try {
-    if (typeof req.body.bio === 'undefined') {
-      res.json({ error: 'request body must include \'bio\' field' });
+    if (typeof req.body.bio === 'undefined' || typeof req.body.username === 'undefined') {
+      res.json({ error: 'request body must include \'bio\' and \'username\' fields' });
       return;
     }
     Vendor.findById(req.user._id)
     .then(vendor => {
-      const updatedVendor = Object.assign({}, vendor._doc, { bio: req.body.bio });
+      const updatedVendor = Object.assign({}, vendor._doc, { bio: req.body.bio, username: req.body.username });
       Vendor.update({ _id: req.user._id }, updatedVendor)
       .then(success => {
         Vendor.findById(req.user._id)

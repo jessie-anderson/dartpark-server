@@ -36,7 +36,7 @@ router.route('/cards/:cardId')
       .put(requireAuthRenter, Card.updateCard)
       .delete(requireAuthRenter, Card.deleteCard);
 
-// spot routes: vendor
+// spot routes
 router.route('/vendor/spots')
       .post(requireAuthVendor, Spot.createSpot)
       .get(requireAuthVendor, Vendor.getSpots);
@@ -47,7 +47,6 @@ router.route('/vendor/spots/:spotId')
       .delete(requireAuthVendor, Spot.deleteSpot)
       .get(requireAuthVendor, Spot.getSpot);
 
-// spot routes: renter
 router.route('/buySpot/:spotId')
       .put(requireAuthRenter, Renter.buySpot);
 
@@ -58,7 +57,10 @@ router.route('/renter/spots/:spotId')
       .get(requireAuthRenter, Spot.getSpot)
       .delete(requireAuthRenter, Renter.deleteSpot);
 
-// signup routes
+router.route('/spots')
+      .get(requireAuthRenter, Spot.getAllSpots);
+
+// signup/signin routes
 router.route('/renter/signup')
       .post(Renter.createRenter);
 
@@ -71,6 +73,7 @@ router.route('/vendor/signup')
 router.route('/vendor/signin')
       .post(requireSigninVendor, Vendor.signin);
 
+// conversation routes
 router.route('/conversations')
       .put(requireAuthRenter, requireAuthVendor, Conversation.createConversation);
 
@@ -92,11 +95,11 @@ router.route('/vendor/changePassword')
       .put(requireAuthVendor, Vendor.changePassword);
 
 // change bio: renter
-router.route('/renter/changeBio')
-      .put(requireAuthRenter, Renter.updateBio);
+router.route('/renter/updateBioAndName')
+      .put(requireAuthRenter, Renter.updateBioAndName);
 
 // change bio: vendor
-router.route('/vendor/changeBio')
-      .put(requireAuthVendor, Vendor.updateBio);
+router.route('/vendor/updateBioAndName')
+      .put(requireAuthVendor, Vendor.updateBioAndName);
 
 export default router;

@@ -32,7 +32,7 @@ export const createSpot = (req, res) => {
         Vendor.findOne({ _id: vendor._id })
         .populate('spots')
         .then(populatedVendor => {
-          res.json({ vendor: populatedVendor, spots: populatedVendor.spots });
+          res.json({ vendor: populatedVendor, spots: populatedVendor.spots, spot: newSpot });
         })
         .catch(err => {
           res.json({ vendorPopulateError: err });
@@ -173,6 +173,22 @@ export const getSpot = (req, res) => {
     })
     .catch(err => {
       res.json({ errorFindingSpot: err });
+    });
+  } catch (err) {
+    res.json({ generalError: err });
+  }
+};
+
+export const getAllSpots = (req, res) => {
+  try {
+    Spot.find()
+    .populate('vendor')
+    .then(spots => {
+      console.log(spots);
+      res.json(spots);
+    })
+    .catch(err => {
+      res.json({ spotFindError: err });
     });
   } catch (err) {
     res.json({ generalError: err });
