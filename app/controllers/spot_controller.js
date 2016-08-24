@@ -6,9 +6,9 @@ export const createSpot = (req, res) => {
   spot.vendor = req.user._id;
   if (typeof req.body.address === 'undefined' || typeof req.body.price === 'undefined'
   || typeof req.body.startDate === 'undefined' || typeof req.body.endDate === 'undefined'
-  || typeof req.body.number === 'undefined') {
+  || typeof req.body.spotName === 'undefined') {
     res.json({
-      error: 'request must include the fields \'address\', \'price\', \'number\', \'startDate\', and \'endDate\'',
+      error: 'request must include the fields \'address\', \'price\', \'spotName\', \'startDate\', and \'endDate\'',
     });
     return;
   }
@@ -16,24 +16,23 @@ export const createSpot = (req, res) => {
   spot.price = req.body.price;
   spot.startDate = req.body.startDate;
   spot.endDate = req.body.endDate;
-  spot.number = req.body.number;
+  spot.spotName = req.body.spotName;
 
   // when a spot is first created, no one has bought it yet
   spot.renter = null;
 
   spot.save()
   .then(newSpot => {
-    console.log(req.user);
     Vendor.findById(req.user._id)
     .then(vendor => {
       vendor.spots.push(newSpot._id);
       const updatedVendor = Object.assign({}, vendor._doc, { spots: vendor.spots });
       Vendor.update({ _id: req.user._id }, updatedVendor)
-      .then(newVendor => {
+      .then(success => {
         Vendor.findOne({ _id: vendor._id })
         .populate('spots')
         .then(populatedVendor => {
-          res.json({ vendor: populatedVendor, spot: newSpot });
+          res.json({ vendor: populatedVendor, spots: populatedVendor.spots });
         })
         .catch(err => {
           res.json({ vendorPopulateError: err });
@@ -63,8 +62,8 @@ export const updateSpot = (req, res) => {
       }
       if (typeof req.body.address === 'undefined' || typeof req.body.price === 'undefined'
       || typeof req.body.startDate === 'undefined' || typeof req.body.endDate === 'undefined'
-      || typeof req.body.number === 'undefined') {
-        res.json({ error: 'update request must include \'address\', \'price\', \'startDate\', \'endDate\', and \'number\' fields' });
+      || typeof req.body.spotName === 'undefined') {
+        res.json({ error: 'update request must include \'address\', \'price\', \'spotName\', \'startDate\', and \'endDate\' fields' });
         return;
       }
       const updates = {
@@ -72,7 +71,7 @@ export const updateSpot = (req, res) => {
         price: req.body.price,
         startDate: req.body.startDate,
         endDate: req.body.endDate,
-        number: req.body.number,
+        spotName: req.body.spotName,
       };
       const updatedSpot = Object.assign({}, spot._doc, updates);
       Spot.update({ _id: req.params.spotId }, updatedSpot)
