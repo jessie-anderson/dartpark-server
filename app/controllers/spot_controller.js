@@ -1,5 +1,10 @@
 import Spot from '../models/spot_model';
 import Vendor from '../models/vendor_model';
+import config from '../config';
+
+const googleMapsClient = require('@google/maps').createClient({
+  key: config.google_key,
+});
 
 export const createSpot = (req, res) => {
   const spot = new Spot();
@@ -17,7 +22,6 @@ export const createSpot = (req, res) => {
   spot.startDate = req.body.startDate;
   spot.endDate = req.body.endDate;
   spot.spotName = req.body.spotName;
-
   // when a spot is first created, no one has bought it yet
   spot.renter = null;
 
@@ -198,3 +202,19 @@ export const getAllSpots = (req, res) => {
     res.json({ generalError: err });
   }
 };
+
+// export const getSpotDistance = (req, res) => {
+//   try {
+//     Spot.findById(req.params.spotId)
+//     .then(spot => {
+//       googleMapsClient.distanceMatrix({
+//         origins: req.params.,
+//         destinations: req.params.,
+//         mode: 'walking',
+//       });
+// // // google stuff goes here??? googleMapsClient
+//     });
+//   } catch (err) {
+//     res.json({ errorFindingSpot: err });
+//   }
+// };
