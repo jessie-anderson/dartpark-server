@@ -7,6 +7,7 @@ import * as Conversation from './controllers/conversation_controller';
 import * as Renter from './controllers/renter_controller';
 import * as Spot from './controllers/spot_controller';
 import * as Vendor from './controllers/vendor_controller';
+import * as Payment from './controllers/payment_controller';
 // import * as Picture from './controllers/picture-controller';
 
 // passport
@@ -105,6 +106,11 @@ router.route('/renter/updateBioAndName')
 // change bio: vendor
 router.route('/vendor/updateBioAndName')
       .put(requireAuthVendor, Vendor.updateBioAndName);
+
+// payment api
+router.route('/renter/payment')
+      .get(requireAuthRenter, Payment.getClientToken)
+      .post(requireAuthRenter, Payment.sendPayment);
 
 // pictures
 // router.route('/pictures/upload/user')
