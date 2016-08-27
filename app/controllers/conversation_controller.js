@@ -367,24 +367,23 @@ const getConversationsArray = (currConversation, requester, limit) => {
 
 export const createConversation = (req, res) => {
   try {
-    if (typeof req.body.renterId === 'undefined' || typeof req.body.vendorId === 'undefined' ||
-      typeof req.body.message === 'undefined') {
+    if (typeof req.body.vendorId === 'undefined') {
       res.json({
-        error: 'ERR: Users need \'email\', \'password\', and  \'name\' fields',
+        error: 'ERR: \'vendorId\' field required',
       });
     } else {
       const conversation = new Conversation();
       const message = new Message();
 
-      const renterId = req.body.renterId;
+      const renterId = req.user._id;
       const vendorId = req.body.vendorId;
 
       conversation.renter = renterId;
       conversation.vendor = vendorId;
       conversation.messages = [];
 
-      message.sender = req.body.sender;
-      message.text = req.body.message;
+      message.sender = 'renter';
+      message.text = 'Hey, I just bought one of your spots!';
 
       message.save()
       .then(savedMessage => {
@@ -482,31 +481,30 @@ export const createConversation = (req, res) => {
 
 export const popConversationToTop = (req, res) => {
   try {
-    if (typeof req.params.conversationId === 'undefined' || typeof req.body.id === 'undefined' ||
-         typeof req.body.requester === 'undefined') {
+    if (typeof req.params.conversationId === 'undefined' || typeof req.params.requester === 'undefined') {
       res.json({
-        error: 'Popping conversation requires \'requester type\', \'renter/vendor id\', and  \'conversationId\' fields',
+        error: 'Popping conversation requires \'requester type\' and  \'conversationId\' fields',
       });
     } else {
-      const User = req.body.requester === 'renter' ? Renter : Vendor;
+      const User = req.params.requester === 'renter' ? Renter : Vendor;
 
-      User.findById(req.body.id)
+      User.findById(req.user._id)
       .then(userData => {
         try {
           Conversation.findById(userData.conversations)
           .then(userConvHead => {
             try {
-              const conversationHeads = req.body.requester === 'renter' ? [userConvHead, null] : [null, userConvHead];
+              const conversationHeads = req.params.requester === 'renter' ? [userConvHead, null] : [null, userConvHead];
 
               Conversation.findById(req.params.conversationId)
               .then(conv => {
                 try {
-                  const headNextId = req.body.requester === 'renter' ? userConvHead.next.renter : userConvHead.next.vendor;
+                  const headNextId = req.params.requester === 'renter' ? userConvHead.next.renter : userConvHead.next.vendor;
 
                   if (headNextId.toString() === conv._id.toString()) {
                     res.json({ message: 'Conversation already at the top' });
                   } else {
-                    const connectedConvs = req.body.requester === 'renter' ? [[conv.prev.renter, conv.next.renter], null] : [null, [conv.prev.vendor, conv.next.vendor]];
+                    const connectedConvs = req.params.requester === 'renter' ? [[conv.prev.renter, conv.next.renter], null] : [null, [conv.prev.vendor, conv.next.vendor]];
 
                     spliceOutConversationBothEnds(connectedConvs)
                     .then((renter, vendor) => {
@@ -519,7 +517,7 @@ export const popConversationToTop = (req, res) => {
                               prev: {},
                             };
 
-                            if (req.body.requester === 'renter') {
+                            if (req.params.requester === 'renter') {
                               updateConv.prev.renter = result[0];
                               updateConv.prev.vendor = conv.prev.vendor;
                               updateConv.next.renter = result[1];
@@ -586,9 +584,9 @@ export const popConversationToTop = (req, res) => {
 
 export const getConversations = (req, res) => {
   try {
-    if (typeof req.params.requester === 'undefined' || typeof req.params.id === 'undefined') {
+    if (typeof req.params.requester === 'undefined') {
       res.json({
-        error: 'ERR: Conversations need \'id\' and  \'requester\' fields',
+        error: 'ERR: Conversations need a \'requester\' field',
       });
     } else {
       let User;
@@ -599,7 +597,7 @@ export const getConversations = (req, res) => {
         User = Vendor;
       }
 
-      User.findById(req.params.id)
+      User.findById(req.user._id)
       .then(userData => {
         try {
           Conversation.findById(userData.conversations)
@@ -720,14 +718,14 @@ export const deleteConversation = (req, res) => {
 
 export const sendMessage = (req, res) => {
   try {
-    if (typeof req.body.sender === 'undefined' || typeof req.body.message === 'undefined') {
+    if (typeof req.params.requester === 'undefined' || typeof req.body.message === 'undefined') {
       res.json({
-        error: 'ERR: Sending a message needs a \'sender type\' and \'message\' field',
+        error: 'ERR: Sending a message needs \'requester\' and \'message\' fields',
       });
     } else {
       const newMessage = new Message();
 
-      newMessage.sender = req.body.sender;
+      newMessage.sender = req.params.requester;
       newMessage.text = req.body.message;
 
       newMessage.save()
