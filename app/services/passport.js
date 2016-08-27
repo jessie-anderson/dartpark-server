@@ -21,8 +21,6 @@ const extractAuthRenter = req => {
   try {
     const token = !req.headers ? null : req.headers.authorizationrenter;
 
-    console.log(token);
-
     return token;
   } catch (err) {
     console.error(err);
@@ -33,8 +31,6 @@ const extractAuthRenter = req => {
 const extractAuthVendor = req => {
   try {
     const token = !req.headers ? null : req.headers.authorizationvendor;
-
-    console.log(token);
 
     return token;
   } catch (err) {

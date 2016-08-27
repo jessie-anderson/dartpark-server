@@ -367,24 +367,23 @@ const getConversationsArray = (currConversation, requester, limit) => {
 
 export const createConversation = (req, res) => {
   try {
-    if (typeof req.body.renterId === 'undefined' || typeof req.body.vendorId === 'undefined' ||
-      typeof req.body.message === 'undefined') {
+    if (typeof req.body.vendorId === 'undefined') {
       res.json({
-        error: 'ERR: Users need \'email\', \'password\', and  \'name\' fields',
+        error: 'ERR: \'vendorId\' field required',
       });
     } else {
       const conversation = new Conversation();
       const message = new Message();
 
-      const renterId = req.body.renterId;
+      const renterId = req.user._id;
       const vendorId = req.body.vendorId;
 
       conversation.renter = renterId;
       conversation.vendor = vendorId;
       conversation.messages = [];
 
-      message.sender = req.body.sender;
-      message.text = req.body.message;
+      message.sender = 'renter';
+      message.text = 'Hey, I just bought one of your spots!';
 
       message.save()
       .then(savedMessage => {
@@ -586,9 +585,9 @@ export const popConversationToTop = (req, res) => {
 
 export const getConversations = (req, res) => {
   try {
-    if (typeof req.params.requester === 'undefined' || typeof req.params.id === 'undefined') {
+    if (typeof req.params.requester === 'undefined') {
       res.json({
-        error: 'ERR: Conversations need \'id\' and  \'requester\' fields',
+        error: 'ERR: Conversations need a \'requester\' field',
       });
     } else {
       let User;
@@ -599,7 +598,7 @@ export const getConversations = (req, res) => {
         User = Vendor;
       }
 
-      User.findById(req.params.id)
+      User.findById(req.user._id)
       .then(userData => {
         try {
           Conversation.findById(userData.conversations)
