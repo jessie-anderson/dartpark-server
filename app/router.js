@@ -7,6 +7,7 @@ import * as Conversation from './controllers/conversation_controller';
 import * as Renter from './controllers/renter_controller';
 import * as Spot from './controllers/spot_controller';
 import * as Vendor from './controllers/vendor_controller';
+// import * as Picture from './controllers/picture-controller';
 
 // passport
 import { requireSigninRenter, requireSigninVendor, requireAuthRenter, requireAuthVendor, requireAuthVersatile } from './services/passport';
@@ -104,5 +105,15 @@ router.route('/renter/updateBioAndName')
 // change bio: vendor
 router.route('/vendor/updateBioAndName')
       .put(requireAuthVendor, Vendor.updateBioAndName);
+
+// pictures
+// router.route('/pictures/upload/user')
+      // .put(requireAuthVersatile, Picture.uploadUserPic);
+
+// router.route('/pictures/upload/car/:carId')
+      // .put(requireAuthRenter, Picture.uploadCarPic);
+
+// router.route('/pictures/upload/spot/:spotId')
+      // .put(requireAuthVendor, Picture.uploadSpotPic);
 
 export default router;

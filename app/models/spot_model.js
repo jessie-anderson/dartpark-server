@@ -32,6 +32,10 @@ const SpotSchema = new Schema({
     ref: 'Renter',
     default: null,
   },
+  picUrl: {
+    type: String,
+    default: '',
+  },
 });
 
 // create model class
