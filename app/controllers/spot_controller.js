@@ -203,18 +203,17 @@ export const getAllSpots = (req, res) => {
   }
 };
 
-// export const getSpotDistance = (req, res) => {
-//   try {
-//     Spot.findById(req.params.spotId)
-//     .then(spot => {
-//       googleMapsClient.distanceMatrix({
-//         origins: req.params.,
-//         destinations: req.params.,
-//         mode: 'walking',
-//       });
-// // // google stuff goes here??? googleMapsClient
-//     });
-//   } catch (err) {
-//     res.json({ errorFindingSpot: err });
-//   }
-// };
+export const getSpotDistance = (req, res) => {
+  try {
+    Spot.findById(req.params.spotId)
+    .then(spot => {
+      googleMapsClient.distanceMatrix({
+        origins: req.body.origin,
+        destinations: req.body.destination,
+        mode: 'walking',
+      });
+    });
+  } catch (err) {
+    res.json({ errorFindingSpot: err });
+  }
+};
