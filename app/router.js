@@ -78,9 +78,9 @@ router.route('/vendor/signin')
 
 // conversation routes
 router.route('/conversations')
-      .put(requireAuthRenter, requireAuthVendor, Conversation.createConversation);
+      .put(requireAuthRenter, Conversation.createConversation);
 
-router.route('/conversations/:id/requester/:requester')
+router.route('/conversations/requester/:requester')
       .get(requireAuthVersatile, Conversation.getConversations);
 
 router.route('/conversations/:conversationId')
