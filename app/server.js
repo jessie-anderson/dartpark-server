@@ -1,14 +1,19 @@
 import express from 'express';
-
 import bodyParser from 'body-parser';
-
 import cors from 'cors';
 import mongoose from 'mongoose';
+import socketio from 'socket.io';
+import http from 'http';
+
 import apiRouter from './router';
+import sendMessage from './controllers/conversation_controller';
+import { requireAuthVersatile } from './services/passport';
 
 
 // initialize
 const app = express();
+const server = http.createServer(app);
+const io = socketio(server);
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost/dartpark';
 mongoose.connect(mongoURI);
 // set mongoose promises to es6 default
@@ -25,9 +30,23 @@ app.use(bodyParser.json());
 // all of our routes will be prefixed with /api
 app.use('/api', apiRouter);
 
+io.on('connection', (socket) => {
+  // creates notes and
+  socket.on('sendMessage', (fields) => {
+    console.log(fields);
+    socket.emit('error', 'create failed');
+    // sendMessage(fields).then((result) => {
+    //   pushNotes();
+    // }).catch(error => {
+    //   console.log(error);
+    //   socket.emit('error', 'create failed');
+    // });
+  });
+});
+
 // START THE SERVER
 // =============================================================================
 const port = process.env.PORT || 9090;
-app.listen(port);
+server.listen(port);
 
 console.log(`listening on: ${port}`);
