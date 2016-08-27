@@ -7,6 +7,8 @@ import * as Conversation from './controllers/conversation_controller';
 import * as Renter from './controllers/renter_controller';
 import * as Spot from './controllers/spot_controller';
 import * as Vendor from './controllers/vendor_controller';
+import * as Payment from './controllers/payment_controller';
+// import * as Picture from './controllers/picture-controller';
 
 // passport
 import { requireSigninRenter, requireSigninVendor, requireAuthRenter, requireAuthVendor, requireAuthVersatile } from './services/passport';
@@ -78,15 +80,15 @@ router.route('/vendor/signin')
 
 // conversation routes
 router.route('/conversations')
-      .put(requireAuthRenter, requireAuthVendor, Conversation.createConversation);
+      .put(requireAuthRenter, Conversation.createConversation);
 
-router.route('/conversations/:id/requester/:requester')
+router.route('/conversations/requester/:requester')
       .get(requireAuthVersatile, Conversation.getConversations);
 
-router.route('/conversations/:conversationId')
-      .get(Conversation.getConversation)
-      .put(Conversation.popConversationToTop)
-      .post(Conversation.sendMessage)
+router.route('/conversations/:conversationId/requester/:requester')
+      .get(requireAuthVersatile, Conversation.getConversation)
+      .put(requireAuthVersatile, Conversation.popConversationToTop)
+      .post(requireAuthVersatile, Conversation.sendMessage)
       .delete(Conversation.deleteConversation);
 
 // change password: renter
@@ -104,5 +106,20 @@ router.route('/renter/updateBioAndName')
 // change bio: vendor
 router.route('/vendor/updateBioAndName')
       .put(requireAuthVendor, Vendor.updateBioAndName);
+
+// payment api
+router.route('/renter/payment')
+      .get(requireAuthRenter, Payment.getClientToken)
+      .post(requireAuthRenter, Payment.sendPayment);
+
+// pictures
+// router.route('/pictures/upload/user')
+      // .put(requireAuthVersatile, Picture.uploadUserPic);
+
+// router.route('/pictures/upload/car/:carId')
+      // .put(requireAuthRenter, Picture.uploadCarPic);
+
+// router.route('/pictures/upload/spot/:spotId')
+      // .put(requireAuthVendor, Picture.uploadSpotPic);
 
 export default router;
