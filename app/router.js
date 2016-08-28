@@ -87,8 +87,8 @@ router.route('/conversations/requester/:requester')
 
 router.route('/conversations/:conversationId/requester/:requester')
       .get(requireAuthVersatile, Conversation.getConversation)
-      .put(requireAuthVersatile, Conversation.popConversationToTop)
       .post(requireAuthVersatile, Conversation.sendMessage)
+      .put(requireAuthVersatile, Conversation.popConversationToTop)
       .delete(Conversation.deleteConversation);
 
 // change password: renter
