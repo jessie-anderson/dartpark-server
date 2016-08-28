@@ -33,6 +33,10 @@ const RenterSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Conversation',
   },
+  picUrl: {
+    type: String,
+    default: '',
+  },
 }, {
   timestamp: true,
 }
