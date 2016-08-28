@@ -9,7 +9,6 @@ import apiRouter from './router';
 import sendMessage from './controllers/conversation_controller';
 import { requireAuthVersatile } from './services/passport';
 
-
 // initialize
 const app = express();
 const server = http.createServer(app);
