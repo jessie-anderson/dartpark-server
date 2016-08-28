@@ -29,6 +29,8 @@ export const sendPayment = (req, res) => {
       return;
     }
     const nonceFromTheClient = req.body.payment_method_nonce;
+    console.log('nonce:');
+    console.log(nonceFromTheClient);
     gateway.transaction.sale({
       amount: req.body.amount,
       paymentMethodNonce: nonceFromTheClient,
