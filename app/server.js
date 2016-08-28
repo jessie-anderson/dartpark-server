@@ -31,17 +31,33 @@ app.use(bodyParser.json());
 app.use('/api', apiRouter);
 
 io.on('connection', (socket) => {
-  // creates notes and
-  socket.on('sendMessage', (fields) => {
-    console.log(fields);
-    socket.emit('error', 'create failed');
-    // sendMessage(fields).then((result) => {
-    //   pushNotes();
-    // }).catch(error => {
-    //   console.log(error);
-    //   socket.emit('error', 'create failed');
-    // });
-  });
+  try {
+    // creates notes and
+    socket.on('sendMessage', fields => {
+      try {
+        const pushMessages = partiesInvolved => {
+          try {
+            console.log(partiesInvolved);
+            io.sockets.emit('incomingMessage', partiesInvolved);
+          } catch (err) {
+            io.sockets.emit('error', err);
+          }
+        };
+
+        console.log(fields);
+
+        const renterId = fields.renter;
+        const vendorId = fields.vendor;
+        const conversationId = fields.id;
+
+        pushMessages({ renterId, vendorId, conversationId });
+      } catch (err) {
+        socket.emit('error', err);
+      }
+    });
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 // START THE SERVER
