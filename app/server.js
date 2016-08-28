@@ -6,7 +6,6 @@ import cors from 'cors';
 import mongoose from 'mongoose';
 import apiRouter from './router';
 
-
 // initialize
 const app = express();
 const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost/dartpark';
