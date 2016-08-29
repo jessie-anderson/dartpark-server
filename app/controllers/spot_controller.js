@@ -24,6 +24,7 @@ export const createSpot = (req, res) => {
   spot.spotName = req.body.spotName;
   // when a spot is first created, no one has bought it yet
   spot.renter = null;
+  spot.picUrl = '';
 
   spot.save()
   .then(newSpot => {
@@ -70,12 +71,14 @@ export const updateSpot = (req, res) => {
         res.json({ error: 'update request must include \'address\', \'price\', \'spotName\', \'startDate\', and \'endDate\' fields' });
         return;
       }
+      console.log(req.body.picUrl);
       const updates = {
         address: req.body.address,
         price: req.body.price,
         startDate: req.body.startDate,
         endDate: req.body.endDate,
         spotName: req.body.spotName,
+        picUrl: req.body.picUrl,
       };
       const updatedSpot = Object.assign({}, spot._doc, updates);
       Spot.update({ _id: req.params.spotId }, updatedSpot)
