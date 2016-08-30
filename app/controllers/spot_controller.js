@@ -24,7 +24,7 @@ export const createSpot = (req, res) => {
   spot.spotName = req.body.spotName;
   // when a spot is first created, no one has bought it yet
   spot.renter = null;
-  spot.picUrl = '';
+  spot.picUrl = 'blah';
 
   spot.save()
   .then(newSpot => {
